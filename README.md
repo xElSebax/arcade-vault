@@ -14,3 +14,14 @@ https://github.com/Klerith/fernando-skills
 ```bash
 npx skills@latest add Klerith/fernando-skills
 ```
+
+## Comandos
+
+```bash
+npm run dev      # Servidor de desarrollo (http://localhost:3000)
+npm run build    # Build de producción
+npm run start    # Servir build de producción
+npm run lint     # ESLint
+```
+
+No hay suite de tests configurada todavía.
