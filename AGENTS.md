@@ -16,16 +16,9 @@ Este archivo es la memoria persistente del proyecto. Cursor lo lee al inicio de 
 | Lint | ESLint con `eslint-config-next` |
 | Fuentes | Geist Sans / Geist Mono (next/font) |
 
-## Comandos
+## Skills
 
-```bash
-npm run dev      # Servidor de desarrollo (http://localhost:3000)
-npm run build    # Build de producción
-npm run start    # Servir build de producción
-npm run lint     # ESLint
-```
-
-No hay suite de tests configurada todavía.
+Usa siempre /frontend-design para diseñar la interfaz de usuario.
 
 ## Estructura del proyecto
 
