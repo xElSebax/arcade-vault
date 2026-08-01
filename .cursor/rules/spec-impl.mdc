@@ -1,0 +1,67 @@
+---
+description: Implements an approved spec. Validates that the state means "Approved", creates a git branch named after the spec, switches to it, and starts the implementation step by step with pauses to review diffs.
+alwaysApply: false
+---
+
+# /spec-impl — Implementer of approved specs
+
+## Session context
+
+At the start, check:
+
+1. `git status --short` — current repository state
+2. `git branch --show-current` — current branch
+3. Contents of `specs/` — available specs
+4. `specs/.spec-config.yml` — `AutoCreateBranch` flag (default `true` if missing)
+
+---
+
+## Instructions
+
+Follow these four phases in strict order. **Do not advance to the next phase if the previous one did not complete correctly.**
+
+### Phase 1 — Identify the spec
+
+If the user did not specify a spec name:
+
+- List the files available in `specs/`.
+- Ask the user to specify the exact name.
+- Stop and wait for an answer.
+
+If the user provided a name:
+
+- Look for the file in `specs/`. The user may have written the full name (`01-mvp-arkanoid`), only the number (`01`), or only the slug (`mvp-arkanoid`).
+- If not found, show available specs and ask to correct the name.
+
+### Phase 2 — Validate the spec's state
+
+Read the spec file. Look for the state line (`**Estado:**` or `**Status:**`).
+
+**Absolute rule:** Only continue if the state **means "Approved"** (`Aprobado`, `Approved`, etc.).
+
+Anything else (`Borrador`, `Draft`, `En revisión`, `Implementado`, `Obsoleto`) → stop with the standard error message. Do not offer to proceed anyway.
+
+### Phase 3 — Create the git branch and switch to it
+
+1. Branch name: `spec-NN-slug` (from the spec filename without extension).
+2. Read `AutoCreateBranch` from `specs/.spec-config.yml` (default `true`).
+   - `true`: create/switch to branch without asking.
+   - `false`: ask `[y/N]` before creating the branch.
+3. Confirm to the user: spec path, active branch, state.
+4. Show spec summary: objective, scope, implementation plan, acceptance criteria.
+5. **Do not start implementing yet.**
+
+### Phase 4 — Implement step by step
+
+Ask: "Shall we start with Step 1?" and wait for confirmation.
+
+**Work rhythm:**
+
+- Implement one step of the plan.
+- Show which files were touched and what was done.
+- Pause after each step for diff review.
+- Wait for confirmation before continuing.
+
+**One rule above all:** implement what the spec says. Changes to the spec go into the spec, not into the code by surprise.
+
+**When finishing the last step:** remind the user to verify acceptance criteria and update the spec state to `Implementado`.

@@ -1,0 +1,15 @@
+---
+description: Next.js 16 conventions and breaking changes for this project
+globs: app/**/*
+alwaysApply: false
+---
+
+# Next.js — This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data.
+
+Before writing any Next.js code:
+
+1. Read the relevant guide in `node_modules/next/dist/docs/`.
+2. Heed deprecation notices.
+3. Use App Router patterns (`app/` directory), not Pages Router.
