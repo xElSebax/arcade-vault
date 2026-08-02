@@ -4,6 +4,9 @@ import {
   JetBrains_Mono,
   Press_Start_2P,
 } from "next/font/google";
+import { AuthProvider } from "@/components/providers/auth-provider";
+import { Footer } from "@/components/footer";
+import { Nav } from "@/components/nav";
 import "./globals.css";
 
 const pressStart2P = Press_Start_2P({
@@ -41,7 +44,13 @@ export default function RootLayout({
       <body className="min-h-full">
         <div className="av-bg" aria-hidden="true" />
         <div className="av-noise" aria-hidden="true" />
-        <div className="av-app">{children}</div>
+        <div className="av-app">
+          <AuthProvider>
+            <Nav />
+            <main className="av-main">{children}</main>
+            <Footer />
+          </AuthProvider>
+        </div>
       </body>
     </html>
   );
