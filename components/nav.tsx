@@ -2,15 +2,28 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Btn } from "@/components/btn";
 import { useAuth } from "@/components/providers/auth-provider";
+import { getNavActiveState } from "@/lib/navigation";
 
-function bibliotecaActive(pathname: string): boolean {
+interface NavLinkProps {
+  href: string;
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}
+
+function NavLink({ href, active, onClick, children }: NavLinkProps) {
   return (
-    pathname === "/" ||
-    pathname.startsWith("/games/") ||
-    pathname.startsWith("/play/")
+    <Link
+      href={href}
+      className={active ? "active" : ""}
+      aria-current={active ? "page" : undefined}
+      onClick={onClick}
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -21,10 +34,10 @@ export function Nav() {
   const [open, setOpen] = useState(false);
 
   const close = () => setOpen(false);
+  const { biblioteca: bibActive, salon: salonActive, auth: authActive } =
+    getNavActiveState(pathname);
 
-  const bibActive = bibliotecaActive(pathname);
-  const salonActive = pathname === "/hall-of-fame";
-  const authActive = pathname === "/auth";
+  const authBtnClass = `auth-btn${authActive ? " route-active" : ""}`;
 
   return (
     <>
@@ -37,20 +50,12 @@ export function Nav() {
         </Link>
 
         <div className="links">
-          <Link
-            href="/"
-            className={bibActive ? "active" : ""}
-            onClick={close}
-          >
+          <NavLink href="/" active={bibActive} onClick={close}>
             Biblioteca
-          </Link>
-          <Link
-            href="/hall-of-fame"
-            className={salonActive ? "active" : ""}
-            onClick={close}
-          >
+          </NavLink>
+          <NavLink href="/hall-of-fame" active={salonActive} onClick={close}>
             Salón de la Fama
-          </Link>
+          </NavLink>
         </div>
 
         <div className="spacer" />
@@ -61,12 +66,18 @@ export function Nav() {
         </div>
 
         {user ? (
-          <Btn className="auth-btn" variant="ghost" onClick={logout}>
+          <Btn
+            className={authBtnClass}
+            variant="ghost"
+            onClick={logout}
+            aria-current={authActive ? "page" : undefined}
+          >
             {user.name} ▾
           </Btn>
         ) : (
           <Btn
-            className="auth-btn"
+            className={authBtnClass}
+            aria-current={authActive ? "page" : undefined}
             onClick={() => {
               close();
               router.push("/auth");
@@ -99,27 +110,15 @@ export function Nav() {
         >
           MENÚ
         </div>
-        <Link
-          href="/"
-          className={bibActive ? "active" : ""}
-          onClick={close}
-        >
+        <NavLink href="/" active={bibActive} onClick={close}>
           Biblioteca
-        </Link>
-        <Link
-          href="/hall-of-fame"
-          className={salonActive ? "active" : ""}
-          onClick={close}
-        >
+        </NavLink>
+        <NavLink href="/hall-of-fame" active={salonActive} onClick={close}>
           Salón de la Fama
-        </Link>
-        <Link
-          href="/auth"
-          className={authActive ? "active" : ""}
-          onClick={close}
-        >
+        </NavLink>
+        <NavLink href="/auth" active={authActive} onClick={close}>
           {user ? "Cuenta" : "Iniciar Sesión"}
-        </Link>
+        </NavLink>
         <div style={{ flex: 1 }} />
         <div
           className="pixel"
