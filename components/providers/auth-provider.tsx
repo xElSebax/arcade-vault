@@ -4,12 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
 const STORAGE_KEY = "av_user";
+const AUTH_EVENT = "av-auth-change";
 
 export interface User {
   name: string;
@@ -29,6 +29,7 @@ function normalizeName(name: string): string {
 }
 
 function readStoredUser(): User | null {
+  if (typeof window === "undefined") return null;
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -40,14 +41,25 @@ function readStoredUser(): User | null {
   }
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+function subscribe(onStoreChange: () => void) {
+  window.addEventListener(AUTH_EVENT, onStoreChange);
+  return () => window.removeEventListener(AUTH_EVENT, onStoreChange);
+}
 
-  useEffect(() => {
-    setUser(readStoredUser());
-    setHydrated(true);
-  }, []);
+function getServerSnapshot(): User | null {
+  return null;
+}
+
+function notifyAuthChange() {
+  window.dispatchEvent(new Event(AUTH_EVENT));
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const user = useSyncExternalStore(
+    subscribe,
+    readStoredUser,
+    getServerSnapshot,
+  );
 
   const persist = useCallback((next: User | null) => {
     if (next) {
@@ -55,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       sessionStorage.removeItem(STORAGE_KEY);
     }
-    setUser(next);
+    notifyAuthChange();
   }, []);
 
   const login = useCallback(
@@ -74,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [persist]);
 
   const value: AuthContextValue = {
-    user: hydrated ? user : null,
+    user,
     login,
     logout,
     loginAsGuest,

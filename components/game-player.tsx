@@ -20,27 +20,24 @@ export function GamePlayer({ game }: GamePlayerProps) {
   const [level, setLevel] = useState(1);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const [name, setName] = useState(user?.name ?? "INVITADO");
+  const [initials, setInitials] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    setName(user?.name ?? "INVITADO");
-  }, [user]);
+  const playerName = initials ?? user?.name ?? "INVITADO";
 
   useEffect(() => {
     if (over || paused) return;
-    const timer = setInterval(
-      () => setScore((s) => s + Math.floor(10 + Math.random() * 90)),
-      220,
-    );
+    const timer = setInterval(() => {
+      setScore((s) => {
+        const next = s + Math.floor(10 + Math.random() * 90);
+        if (next > 0 && next % 2500 < 100) {
+          setLevel((l) => l + 1);
+        }
+        return next;
+      });
+    }, 220);
     return () => clearInterval(timer);
   }, [over, paused]);
-
-  useEffect(() => {
-    if (score > 0 && score % 2500 < 100) {
-      setLevel((l) => l + 1);
-    }
-  }, [score]);
 
   const endGame = () => setOver(true);
 
@@ -51,6 +48,7 @@ export function GamePlayer({ game }: GamePlayerProps) {
     setPaused(false);
     setOver(false);
     setSaved(false);
+    setInitials(null);
   };
 
   const saveScore = () => {
@@ -64,7 +62,7 @@ export function GamePlayer({ game }: GamePlayerProps) {
           <div className="hud-stat">
             <div className="l">Jugador</div>
             <div className="v" style={{ color: "var(--ink)" }}>
-              {name}
+              {playerName}
             </div>
           </div>
           <div className="hud-stat">
@@ -147,9 +145,9 @@ export function GamePlayer({ game }: GamePlayerProps) {
             {!saved ? (
               <div className="input-row">
                 <input
-                  value={name}
+                  value={playerName}
                   onChange={(e) =>
-                    setName(e.target.value.toUpperCase().slice(0, 10))
+                    setInitials(e.target.value.toUpperCase().slice(0, 10))
                   }
                   placeholder="TUS INICIALES"
                 />

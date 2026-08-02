@@ -1,6 +1,6 @@
 import type { CategoryFilter } from "./categories";
 import { GAMES } from "./games";
-import type { Game, GameCategory, GameColor } from "./games";
+import type { Game } from "./games";
 
 export { CATEGORIES, type CategoryFilter } from "./categories";
 export { GAMES, type Game, type GameCategory, type GameColor } from "./games";
