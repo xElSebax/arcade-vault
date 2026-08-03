@@ -1,6 +1,6 @@
 # SPEC 02 — Homepage landing
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01 — MVP visual de Arcade Vault
 > **Fecha:** 2026-08-02
 > **Objetivo:** Implementar la landing de Inicio en `/` fiel a `references/templates/home-about/home.jsx`, mover la biblioteca de juegos a `/games` y actualizar la navegación global.
