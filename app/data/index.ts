@@ -4,6 +4,21 @@ import type { Game } from "./games";
 
 export { CATEGORIES, type CategoryFilter } from "./categories";
 export { GAMES, type Game, type GameCategory, type GameColor } from "./games";
+export {
+  HOME_FEATURES,
+  HOME_PRICING_FAQ,
+  HOME_STATS,
+  HOME_TICKER,
+  HOME_TOP_PLAYERS,
+  getHomePreviewGames,
+  type HomeAccentColor,
+  type HomeFaqItem,
+  type HomeFeature,
+  type HomeFeatureIcon,
+  type HomeStat,
+  type HomeTickerRow,
+  type HomeTopPlayer,
+} from "./home";
 export { PLAYERS } from "./players";
 export { seededScores, type ScoreRow } from "./scores";
 
