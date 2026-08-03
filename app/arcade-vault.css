@@ -1216,6 +1216,10 @@ a.mini-card {
   color: inherit;
 }
 
+a.lb-link {
+  text-decoration: none;
+}
+
 /* Chips on <button> (library filters, hall tabs) */
 button.chip {
   appearance: none;
