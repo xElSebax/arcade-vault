@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { Btn } from "@/components/btn";
 import { useAuth } from "@/components/providers/auth-provider";
 import { getNavActiveState } from "@/lib/navigation";
+import { useMounted } from "@/lib/use-mounted";
 
 interface NavLinkProps {
   href: string;
@@ -31,6 +32,7 @@ export function Nav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const mounted = useMounted();
   const [open, setOpen] = useState(false);
 
   const close = () => setOpen(false);
@@ -38,6 +40,12 @@ export function Nav() {
     getNavActiveState(pathname);
 
   const authBtnClass = `auth-btn${authActive ? " route-active" : ""}`;
+  const showUser = mounted && user;
+  const mobileAuthLabel = !mounted
+    ? "Iniciar Sesión"
+    : user
+      ? "Cuenta"
+      : "Iniciar Sesión";
 
   return (
     <>
@@ -71,7 +79,7 @@ export function Nav() {
           <span>CRÉDITOS · 03</span>
         </div>
 
-        {user ? (
+        {showUser ? (
           <Btn
             className={authBtnClass}
             variant="ghost"
@@ -129,7 +137,7 @@ export function Nav() {
           Acerca de
         </NavLink>
         <NavLink href="/auth" active={authActive} onClick={close}>
-          {user ? "Cuenta" : "Iniciar Sesión"}
+          {mobileAuthLabel}
         </NavLink>
         <div style={{ flex: 1 }} />
         <div

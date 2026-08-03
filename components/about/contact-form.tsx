@@ -5,13 +5,6 @@ import { Btn } from "@/components/btn";
 
 type ContactFormStatus = "idle" | "submitting" | "success" | "error";
 
-interface ContactFormState {
-  name: string;
-  email: string;
-  message: string;
-  website: string;
-}
-
 interface ContactSuccessResponse {
   ok: true;
 }
@@ -21,35 +14,39 @@ interface ContactErrorResponse {
   error: string;
 }
 
-const EMPTY_FORM: ContactFormState = {
-  name: "",
-  email: "",
-  message: "",
-  website: "",
-};
-
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function isFormComplete(form: ContactFormState): boolean {
+function readFormValues(form: HTMLFormElement) {
+  const data = new FormData(form);
+
+  return {
+    name: String(data.get("name") ?? "").trim(),
+    email: String(data.get("email") ?? "").trim(),
+    message: String(data.get("message") ?? "").trim(),
+    website: String(data.get("website") ?? "").trim(),
+  };
+}
+
+function isFormComplete(values: ReturnType<typeof readFormValues>): boolean {
   return (
-    form.name.trim().length > 0 &&
-    form.email.trim().length > 0 &&
-    isValidEmail(form.email.trim()) &&
-    form.message.trim().length > 0
+    values.name.length > 0 &&
+    values.email.length > 0 &&
+    isValidEmail(values.email) &&
+    values.message.length > 0
   );
 }
 
 export function ContactForm() {
-  const [form, setForm] = useState<ContactFormState>(EMPTY_FORM);
+  const [formKey, setFormKey] = useState(0);
   const [status, setStatus] = useState<ContactFormStatus>("idle");
   const [sentName, setSentName] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
 
   const resetForm = () => {
-    setForm(EMPTY_FORM);
+    setFormKey((current) => current + 1);
     setStatus("idle");
     setSentName(null);
     setErrorMessage(null);
@@ -63,8 +60,9 @@ export function ContactForm() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const values = readFormValues(event.currentTarget);
 
-    if (!isFormComplete(form)) {
+    if (!isFormComplete(values)) {
       triggerShake();
       return;
     }
@@ -76,12 +74,7 @@ export function ContactForm() {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          email: form.email.trim(),
-          message: form.message.trim(),
-          website: form.website,
-        }),
+        body: JSON.stringify(values),
       });
 
       const data = (await response.json()) as
@@ -98,7 +91,7 @@ export function ContactForm() {
         return;
       }
 
-      setSentName(form.name.trim());
+      setSentName(values.name);
       setStatus("success");
     } catch {
       setStatus("error");
@@ -108,6 +101,7 @@ export function ContactForm() {
 
   return (
     <form
+      key={formKey}
       className={`contact-form${shake ? " shake" : ""}`}
       onSubmit={handleSubmit}
       noValidate
@@ -171,10 +165,7 @@ export function ContactForm() {
             <input
               id="contact-name"
               name="name"
-              value={form.name}
-              onChange={(event) =>
-                setForm({ ...form, name: event.target.value })
-              }
+              defaultValue=""
               placeholder="px_kai"
               maxLength={80}
               disabled={status === "submitting"}
@@ -186,10 +177,7 @@ export function ContactForm() {
               id="contact-email"
               name="email"
               type="email"
-              value={form.email}
-              onChange={(event) =>
-                setForm({ ...form, email: event.target.value })
-              }
+              defaultValue=""
               placeholder="jugador@vault.gg"
               disabled={status === "submitting"}
             />
@@ -200,10 +188,7 @@ export function ContactForm() {
               id="contact-message"
               name="message"
               rows={5}
-              value={form.message}
-              onChange={(event) =>
-                setForm({ ...form, message: event.target.value })
-              }
+              defaultValue=""
               placeholder="Cuéntanos qué tienes en mente…"
               maxLength={2000}
               disabled={status === "submitting"}
@@ -213,10 +198,7 @@ export function ContactForm() {
             className="contact-honeypot"
             type="text"
             name="website"
-            value={form.website}
-            onChange={(event) =>
-              setForm({ ...form, website: event.target.value })
-            }
+            defaultValue=""
             tabIndex={-1}
             autoComplete="off"
             aria-hidden="true"
