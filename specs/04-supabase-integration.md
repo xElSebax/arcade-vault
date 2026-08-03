@@ -1,6 +1,6 @@
 # SPEC 04 — Integración de Supabase en Next.js
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01 — MVP visual de Arcade Vault
 > **Fecha:** 2026-08-03
 > **Objetivo:** Integrar el cliente de Supabase en la app Next.js (SDK, utilidades server/browser, middleware y variables de entorno) dejando la infraestructura lista para specs futuros, sin cambiar la funcionalidad actual.
@@ -116,48 +116,48 @@ No se modifican interfaces existentes (`User` de `auth-provider.tsx`, `Game`, `S
 
 ### Dependencias y entorno
 
-- [ ] `@supabase/supabase-js` y `@supabase/ssr` están en `package.json`.
-- [ ] `.env.example` documenta `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` con comentarios de dónde obtenerlos.
-- [ ] El proyecto compila sin errores de TypeScript.
+- [x] `@supabase/supabase-js` y `@supabase/ssr` están en `package.json`.
+- [x] `.env.example` documenta `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `SUPABASE_SERVICE_ROLE_KEY` con comentarios de dónde obtenerlos.
+- [x] El proyecto compila sin errores de TypeScript.
 
 ### Utilidades de cliente
 
-- [ ] Existe `lib/supabase/client.ts` exportando un cliente browser.
-- [ ] Existe `lib/supabase/server.ts` exportando un cliente server (async, con cookies).
-- [ ] Existe `lib/supabase/middleware.ts` exportando un helper para middleware.
+- [x] Existe `lib/supabase/client.ts` exportando un cliente browser.
+- [x] Existe `lib/supabase/server.ts` exportando un cliente server (async, con cookies).
+- [x] Existe `lib/supabase/proxy.ts` exportando un helper para proxy (patrón Supabase + Next.js 16).
 
-### Middleware
+### Proxy (sesión)
 
-- [ ] Existe `middleware.ts` en la raíz del proyecto.
-- [ ] El middleware refresca la sesión (`getUser()`) sin bloquear ni redirigir rutas.
-- [ ] El `matcher` excluye assets estáticos (`_next/static`, `_next/image`, `favicon.ico`, imágenes).
-- [ ] `npm run dev` arranca sin errores de middleware.
+- [x] Existe `proxy.ts` en la raíz del proyecto.
+- [x] El proxy refresca la sesión (`getUser()`) sin bloquear ni redirigir rutas.
+- [x] El `matcher` excluye assets estáticos (`_next/static`, `_next/image`, `favicon.ico`, imágenes).
+- [x] `npm run dev` arranca sin errores de proxy.
 
 ### Health check
 
-- [ ] `GET /api/health/supabase` devuelve `{ ok: true }` con `.env.local` configurado correctamente.
-- [ ] Sin env vars configuradas, devuelve `{ ok: false, error: "..." }` con mensaje claro (sin exponer keys).
-- [ ] La respuesta nunca incluye valores de API keys ni stack traces.
+- [x] `GET /api/health/supabase` devuelve `{ ok: true }` con `.env.local` configurado correctamente.
+- [x] Sin env vars configuradas, devuelve `{ ok: false, error: "..." }` con mensaje claro (sin exponer keys).
+- [x] La respuesta nunca incluye valores de API keys ni stack traces.
 
 ### Sin regresiones
 
-- [ ] `/auth` sigue usando auth mock (`auth-provider.tsx`) — login/invitado funcionan igual.
-- [ ] `/games`, `/hall-of-fame`, `/about` funcionan sin cambios.
-- [ ] Los datos siguen viniendo de `app/data/` (sin consultas a Supabase en pantallas).
-- [ ] El formulario de contacto (`/api/contact`) sigue funcionando con Resend.
+- [x] `/auth` sigue usando auth mock (`auth-provider.tsx`) — login/invitado funcionan igual.
+- [x] `/games`, `/hall-of-fame`, `/about` funcionan sin cambios.
+- [x] Los datos siguen viniendo de `app/data/` (sin consultas a Supabase en pantallas).
+- [x] El formulario de contacto (`/api/contact`) sigue funcionando con Resend.
 
 ### Técnico
 
-- [ ] Sin errores de ESLint en archivos nuevos o modificados.
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` no se importa ni se usa en Client Components ni en código con prefijo `NEXT_PUBLIC_`.
+- [x] Sin errores de ESLint en archivos nuevos o modificados.
+- [x] `SUPABASE_SERVICE_ROLE_KEY` no se importa ni se usa en Client Components ni en código con prefijo `NEXT_PUBLIC_`.
 
 ### Fuera de alcance (verificar que NO existe)
 
-- [ ] No hay tablas ni migraciones SQL en el repo.
-- [ ] No se reemplazó `auth-provider.tsx` por Supabase Auth.
-- [ ] No hay suscripciones Realtime ni Edge Functions.
-- [ ] No hay protección de rutas ni redirects por sesión.
-- [ ] No se migraron datos de `app/data/` a Supabase.
+- [x] No hay tablas ni migraciones SQL en el repo.
+- [x] No se reemplazó `auth-provider.tsx` por Supabase Auth.
+- [x] No hay suscripciones Realtime ni Edge Functions.
+- [x] No hay protección de rutas ni redirects por sesión.
+- [x] No se migraron datos de `app/data/` a Supabase.
 
 ## Decisiones
 
