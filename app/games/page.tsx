@@ -1,13 +1,10 @@
 "use client";
-
 import { useMemo, useState } from "react";
 import { CATEGORIES, GAMES, type CategoryFilter } from "@/app/data";
 import { GameCard } from "@/components/game-card";
-
 export default function GamesPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("TODOS");
-
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     return GAMES.filter(
@@ -16,7 +13,6 @@ export default function GamesPage() {
         game.title.toLowerCase().includes(q),
     );
   }, [query, category]);
-
   return (
     <div className="fade-in">
       <section className="av-hero">
@@ -25,7 +21,6 @@ export default function GamesPage() {
           INSERTA UNA MONEDA PARA JUGAR <span className="blink">_</span>
         </div>
       </section>
-
       <div className="av-filters">
         <div className="av-search">
           <span className="ico">⌕</span>
@@ -48,7 +43,6 @@ export default function GamesPage() {
           ))}
         </div>
       </div>
-
       <div className="av-grid">
         {filtered.map((game) => (
           <GameCard
