@@ -28,15 +28,31 @@ function normalizeName(name: string): string {
   return (name || "PLAYER1").toUpperCase().slice(0, 10);
 }
 
+const readStoredUserCache: {
+  raw: string | null | undefined;
+  user: User | null;
+} = { raw: undefined, user: null };
+
 function readStoredUser(): User | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
+    if (raw === readStoredUserCache.raw) return readStoredUserCache.user;
+    readStoredUserCache.raw = raw;
+    if (!raw) {
+      readStoredUserCache.user = null;
+      return null;
+    }
     const parsed = JSON.parse(raw) as User | null;
-    if (parsed && typeof parsed.name === "string") return parsed;
+    if (parsed && typeof parsed.name === "string") {
+      readStoredUserCache.user = parsed;
+      return parsed;
+    }
+    readStoredUserCache.user = null;
     return null;
   } catch {
+    readStoredUserCache.raw = undefined;
+    readStoredUserCache.user = null;
     return null;
   }
 }
