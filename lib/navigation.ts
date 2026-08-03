@@ -1,4 +1,5 @@
 export interface NavActiveState {
+  inicio: boolean;
   biblioteca: boolean;
   salon: boolean;
   auth: boolean;
@@ -6,8 +7,9 @@ export interface NavActiveState {
 
 export function getNavActiveState(pathname: string): NavActiveState {
   return {
+    inicio: pathname === "/",
     biblioteca:
-      pathname === "/" ||
+      pathname === "/games" ||
       pathname.startsWith("/games/") ||
       pathname.startsWith("/play/"),
     salon: pathname === "/hall-of-fame",
