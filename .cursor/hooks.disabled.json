@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "node .cursor/hooks/format-and-lint.js",
+        "timeout": 120
+      }
+    ],
+    "afterTabFileEdit": [
+      {
+        "command": "node .cursor/hooks/format-and-lint.js",
+        "timeout": 120
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "node .cursor/hooks/format-and-lint.js",
+        "matcher": "Write|StrReplace|EditNotebook",
+        "timeout": 120
+      }
+    ],
+    "stop": [
+      {
+        "command": "node .cursor/hooks/format-and-lint.js",
+        "timeout": 120
+      }
+    ]
+  }
+}
