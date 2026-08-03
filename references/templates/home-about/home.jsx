@@ -117,10 +117,10 @@ function Home({ navigate }) {
             <button className="btn xl pulse" onClick={() => navigate({ name: "biblioteca" })}>▶  EXPLORAR JUEGOS</button>
             <button className="btn xl magenta" onClick={() => navigate({ name: "auth" })}>✦  CREAR CUENTA</button>
           </div>
-          <div className="hero-scroll" aria-hidden="true">
-            <span>DESLIZA</span>
-            <span className="arrow">▼</span>
-          </div>
+        </div>
+        <div className="hero-scroll" aria-hidden="true">
+          <span>DESLIZA</span>
+          <span className="arrow">▼</span>
         </div>
       </section>
 
