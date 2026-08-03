@@ -1209,6 +1209,13 @@ a.btn {
   text-decoration: none;
 }
 
+/* Mini game cards on home landing */
+a.mini-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 /* Chips on <button> (library filters, hall tabs) */
 button.chip {
   appearance: none;
