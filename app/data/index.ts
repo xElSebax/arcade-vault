@@ -2,6 +2,11 @@ import type { CategoryFilter } from "./categories";
 import { GAMES } from "./games";
 import type { Game } from "./games";
 
+export {
+  ABOUT_HIGHLIGHTS,
+  ABOUT_MISSION,
+  type AboutHighlight,
+} from "./about";
 export { CATEGORIES, type CategoryFilter } from "./categories";
 export { GAMES, type Game, type GameCategory, type GameColor } from "./games";
 export {
