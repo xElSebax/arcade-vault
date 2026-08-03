@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cursor hooks debug log
+.cursor/hooks/hook.log
+.cursor/hooks/pending-format.json
