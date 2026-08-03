@@ -10,7 +10,9 @@ const eslintConfig = defineConfig([
   {
     rules: {
       semi: ["error", "always"],
-      "no-multiple-empty-lines": ["error", { max: 0, maxEOF: 0, maxBOF: 0 }],
+      // Desactivado: prohibía cualquier línea en blanco (max: 0) y marcaba error en el
+      // editor en cada enter entre bloques. Para reactivar:
+      // "no-multiple-empty-lines": ["error", { max: 0, maxEOF: 0, maxBOF: 0 }],
     },
   },
   // Override default ignores of eslint-config-next.
