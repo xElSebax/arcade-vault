@@ -160,7 +160,7 @@ export function GamePlayer({ game }: GamePlayerProps) {
             )}
             <div className="actions">
               <Btn onClick={restart}>JUGAR DE NUEVO</Btn>
-              <Link href="/" className="btn magenta">
+              <Link href="/games" className="btn magenta">
                 VOLVER AL VAULT
               </Link>
             </div>

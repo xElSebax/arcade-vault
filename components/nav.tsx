@@ -34,7 +34,7 @@ export function Nav() {
   const [open, setOpen] = useState(false);
 
   const close = () => setOpen(false);
-  const { biblioteca: bibActive, salon: salonActive, auth: authActive } =
+  const { inicio: inicioActive, biblioteca: bibActive, salon: salonActive, auth: authActive } =
     getNavActiveState(pathname);
 
   const authBtnClass = `auth-btn${authActive ? " route-active" : ""}`;
@@ -50,7 +50,10 @@ export function Nav() {
         </Link>
 
         <div className="links">
-          <NavLink href="/" active={bibActive} onClick={close}>
+          <NavLink href="/" active={inicioActive} onClick={close}>
+            Inicio
+          </NavLink>
+          <NavLink href="/games" active={bibActive} onClick={close}>
             Biblioteca
           </NavLink>
           <NavLink href="/hall-of-fame" active={salonActive} onClick={close}>
@@ -110,7 +113,10 @@ export function Nav() {
         >
           MENÚ
         </div>
-        <NavLink href="/" active={bibActive} onClick={close}>
+        <NavLink href="/" active={inicioActive} onClick={close}>
+          Inicio
+        </NavLink>
+        <NavLink href="/games" active={bibActive} onClick={close}>
           Biblioteca
         </NavLink>
         <NavLink href="/hall-of-fame" active={salonActive} onClick={close}>
