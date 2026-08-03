@@ -19,12 +19,12 @@ export default function AuthPage() {
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     login(username);
-    router.push("/");
+    router.push("/games");
   };
 
   const playAsGuest = () => {
     loginAsGuest();
-    router.push("/");
+    router.push("/games");
   };
 
   return (

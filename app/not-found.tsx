@@ -9,7 +9,7 @@ export default function NotFound() {
       <p className="mono" style={{ color: "var(--ink-dim)", marginBottom: 24 }}>
         Este juego no existe en el vault.
       </p>
-      <Link href="/" className="btn lg">
+      <Link href="/games" className="btn lg">
         VOLVER AL VAULT
       </Link>
     </div>
