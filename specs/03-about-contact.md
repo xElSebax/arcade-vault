@@ -1,6 +1,6 @@
 # SPEC 03 — Página Acerca de y contacto con Resend
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01 — MVP visual de Arcade Vault, SPEC 02 — Homepage landing
 > **Fecha:** 2026-08-03
 > **Objetivo:** Implementar la página `/about` fiel a `references/templates/home-about/about.jsx`, con envío real de correo vía Resend y link "Acerca de" en la navegación global.
