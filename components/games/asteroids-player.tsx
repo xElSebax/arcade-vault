@@ -25,6 +25,7 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
   const [over, setOver] = useState(false);
   const [initials, setInitials] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const getDefaultPlayerName = useCallback(
     () => storedName ?? user?.name ?? "INVITADO",
@@ -60,12 +61,15 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
     setPaused(false);
     setOver(false);
     setSaved(false);
+    setSaveError(null);
     setInitials(null);
     engineRef.current?.reset();
   };
 
   const handleSaveScore = async () => {
     if (saved) return;
+
+    setSaveError(null);
 
     const result = await saveScore({
       gameId: game.id,
@@ -76,6 +80,8 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
     if (result.ok) {
       writePlayerName(initials ?? getDefaultPlayerName());
       setSaved(true);
+    } else {
+      setSaveError(result.error);
     }
   };
 
@@ -94,6 +100,7 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
       onRestart={restart}
       onSaveScore={handleSaveScore}
       onInitialsChange={setInitials}
+      saveError={saveError}
       arena={
         <AsteroidsCanvas
           paused={paused || over}

@@ -20,6 +20,7 @@ interface GamePlayerShellProps {
   onRestart: () => void;
   onSaveScore: () => void;
   onInitialsChange: (value: string) => void;
+  saveError?: string | null;
   arena: ReactNode;
 }
 
@@ -37,6 +38,7 @@ export function GamePlayerShell({
   onRestart,
   onSaveScore,
   onInitialsChange,
+  saveError,
   arena,
 }: GamePlayerShellProps) {
   const router = useRouter();
@@ -126,6 +128,20 @@ export function GamePlayerShell({
                   </div>
                 ) : (
                   <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
+                )}
+                {saveError && !saved && (
+                  <div
+                    className="mono"
+                    style={{
+                      marginTop: 10,
+                      fontSize: 11,
+                      color: "var(--magenta)",
+                      letterSpacing: "0.08em",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {saveError}
+                  </div>
                 )}
                 <div className="actions">
                   <Btn onClick={onRestart}>JUGAR DE NUEVO</Btn>

@@ -1,6 +1,6 @@
 "use server";
 
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 
 export interface SaveScoreInput {
   gameId: string;
@@ -20,8 +20,15 @@ function validatePlayerName(name: string): string | null {
   return trimmed;
 }
 
-function validateScore(score: number): boolean {
-  return Number.isInteger(score) && score >= 0;
+function validateScore(score: number): number | null {
+  if (!Number.isFinite(score)) {
+    return null;
+  }
+  const normalized = Math.floor(score);
+  if (normalized < 0) {
+    return null;
+  }
+  return normalized;
 }
 
 export async function saveScore(input: SaveScoreInput): Promise<SaveScoreResult> {
@@ -38,12 +45,13 @@ export async function saveScore(input: SaveScoreInput): Promise<SaveScoreResult>
     };
   }
 
-  if (!validateScore(input.score)) {
+  const score = validateScore(input.score);
+  if (score === null) {
     return { ok: false, error: "La puntuación debe ser un entero ≥ 0." };
   }
 
   try {
-    const supabase = createServiceClient();
+    const supabase = await createClient();
 
     const { data: game, error: gameError } = await supabase
       .from("games")
@@ -58,16 +66,26 @@ export async function saveScore(input: SaveScoreInput): Promise<SaveScoreResult>
     const { error: insertError } = await supabase.from("scores").insert({
       game_id: gameId,
       player_name: playerName,
-      score: input.score,
+      score,
       user_id: null,
     });
 
     if (insertError) {
-      return { ok: false, error: "No se pudo guardar la puntuación." };
+      console.error("[saveScore] insert failed:", insertError.message);
+      return {
+        ok: false,
+        error:
+          process.env.NODE_ENV === "development"
+            ? `No se pudo guardar: ${insertError.message}`
+            : "No se pudo guardar la puntuación.",
+      };
     }
 
     return { ok: true };
-  } catch {
-    return { ok: false, error: "No se pudo guardar la puntuación." };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "No se pudo guardar la puntuación.";
+    console.error("[saveScore]", message);
+    return { ok: false, error: message };
   }
 }
