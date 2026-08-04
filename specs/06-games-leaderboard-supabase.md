@@ -1,6 +1,6 @@
 # SPEC 06 — Catálogo de juegos y leaderboard en Supabase
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 04 — Integración de Supabase en Next.js
 > **Fecha:** 2026-08-04
 > **Objetivo:** Crear tablas `games` y `scores` en Supabase, sembrar Asteroids, y conectar la UI existente para leer rankings y guardar puntuaciones reales (con nombre recordado en localStorage) vía Server Action.
@@ -250,40 +250,40 @@ Misma lógica de ramificación para `getPlayerBestInGame` (solo asteroids; resto
 
 ### Supabase
 
-- [ ] Existen las tablas `public.games` y `public.scores` en el proyecto remoto.
-- [ ] `games` contiene una fila con `id = 'asteroids'`.
-- [ ] RLS activo: `anon` puede `SELECT` en ambas tablas.
-- [ ] `anon` no puede `INSERT` en `scores` (inserción solo vía Server Action).
+- [x] Existen las tablas `public.games` y `public.scores` en el proyecto remoto.
+- [x] `games` contiene una fila con `id = 'asteroids'`.
+- [x] RLS activo: `anon` puede `SELECT` en ambas tablas.
+- [x] `anon` no puede `INSERT` en `scores` (inserción solo vía Server Action).
 
 ### Lectura (híbrido)
 
-- [ ] `/games/asteroids` muestra el leaderboard lateral desde Supabase (vacío o con datos reales).
-- [ ] `/games/bloque-buster` (u otro mock) sigue mostrando leaderboard generado por `seededScores`.
-- [ ] `/hall-of-fame` con tab **ASTEROIDS** muestra ranking desde Supabase.
-- [ ] `/hall-of-fame` con otro tab sigue mostrando datos mock.
-- [ ] En tab asteroids, si hay nombre en `localStorage` (`av_player_name`) y scores en BD, aparece la fila **TU MEJOR MARCA** con score y rango correctos.
-- [ ] Sin nombre guardado ni auth mock, no aparece la fila **TU MEJOR MARCA** en asteroids (o muestra mock solo en tabs no-asteroids como hoy).
+- [x] `/games/asteroids` muestra el leaderboard lateral desde Supabase (vacío o con datos reales).
+- [x] `/games/bloque-buster` (u otro mock) sigue mostrando leaderboard generado por `seededScores`.
+- [x] `/hall-of-fame` con tab **ASTEROIDS** muestra ranking desde Supabase.
+- [x] `/hall-of-fame` con otro tab sigue mostrando datos mock.
+- [x] En tab asteroids, si hay nombre en `localStorage` (`av_player_name`) y scores en BD, aparece la fila **TU MEJOR MARCA** con score y rango correctos.
+- [x] Sin nombre guardado ni auth mock, no aparece la fila **TU MEJOR MARCA** en asteroids (o muestra mock solo en tabs no-asteroids como hoy).
 
 ### Guardar puntuación (Asteroids)
 
-- [ ] Al game over, el input de nombre se pre-rellena con el valor de `localStorage` si existe.
-- [ ] Si no hay `localStorage`, se usa auth mock `user.name` o `INVITADO`.
-- [ ] Pulsar **GUARDAR PUNTUACIÓN** inserta una fila en `scores` con `game_id`, `player_name`, `score` y `user_id = null`.
-- [ ] Tras guardar con éxito, el nombre queda en `localStorage`.
-- [ ] Tras guardar, se muestra el toast **PUNTUACIÓN GUARDADA_** (sin segundo insert al pulsar de nuevo si `saved` ya es true).
-- [ ] La puntuación guardada aparece en `/games/asteroids` y en `/hall-of-fame` (tab asteroids) tras recargar.
+- [x] Al game over, el input de nombre se pre-rellena con el valor de `localStorage` si existe.
+- [x] Si no hay `localStorage`, se usa auth mock `user.name` o `INVITADO`.
+- [x] Pulsar **GUARDAR PUNTUACIÓN** inserta una fila en `scores` con `game_id`, `player_name`, `score` y `user_id = null`.
+- [x] Tras guardar con éxito, el nombre queda en `localStorage`.
+- [x] Tras guardar, se muestra el toast **PUNTUACIÓN GUARDADA_** (sin segundo insert al pulsar de nuevo si `saved` ya es true).
+- [x] La puntuación guardada aparece en `/games/asteroids` y en `/hall-of-fame` (tab asteroids) tras recargar.
 
 ### Validación server
 
-- [ ] `gameId` inválido o no existente en `games` → Server Action devuelve error sin insertar.
-- [ ] `playerName` vacío o > 10 caracteres → error sin insertar.
-- [ ] `score` negativo → error sin insertar.
+- [x] `gameId` inválido o no existente en `games` → Server Action devuelve error sin insertar.
+- [x] `playerName` vacío o > 10 caracteres → error sin insertar.
+- [x] `score` negativo → error sin insertar.
 
 ### Regresión
 
-- [ ] `/play/asteroids` juega con normalidad (pausa, reinicio, game over).
-- [ ] `GamePlayer` placeholder en `/play/[id]` no guarda en Supabase.
-- [ ] `npm run build` termina sin errores de TypeScript.
+- [x] `/play/asteroids` juega con normalidad (pausa, reinicio, game over).
+- [x] `GamePlayer` placeholder en `/play/[id]` no guarda en Supabase.
+- [x] `npm run build` termina sin errores de TypeScript.
 
 ## Decisiones
 
