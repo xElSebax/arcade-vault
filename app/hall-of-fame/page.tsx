@@ -1,22 +1,80 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { GAMES, seededScores } from "@/app/data";
+import { useEffect, useMemo, useState } from "react";
+import {
+  fetchLeaderboardForGame,
+  fetchPlayerBestForGame,
+} from "@/app/actions/leaderboard";
+import { GAMES, seededScores, type ScoreRow } from "@/app/data";
 import { useAuth } from "@/components/providers/auth-provider";
+import { usePlayerName } from "@/lib/player-name";
+
+const SUPABASE_TAB = "asteroids";
 
 export default function HallOfFamePage() {
   const { user } = useAuth();
+  const storedName = usePlayerName();
   const [tab, setTab] = useState(GAMES[0].id);
+  const [supabaseRows, setSupabaseRows] = useState<ScoreRow[]>([]);
+  const [playerBest, setPlayerBest] = useState<{
+    score: number;
+    rank: number;
+    date: string;
+  } | null>(null);
 
-  const rows = useMemo(() => seededScores(tab.length * 23 + 7, 12), [tab]);
+  const isSupabaseTab = tab === SUPABASE_TAB;
+  const mockRows = useMemo(() => seededScores(tab.length * 23 + 7, 12), [tab]);
+  const rows = isSupabaseTab ? supabaseRows : mockRows;
   const game = GAMES.find((g) => g.id === tab);
+
+  const displayName = storedName ?? user?.name ?? null;
+
   const youRank = user ? Math.floor(8 + (tab.length % 4)) : null;
-  const youScore = user ? rows[5]?.score - 2400 : null;
+  const youScore = user ? mockRows[5]?.score - 2400 : null;
+
+  useEffect(() => {
+    if (!isSupabaseTab) {
+      return;
+    }
+
+    let cancelled = false;
+
+    fetchLeaderboardForGame(tab, 12).then((data) => {
+      if (!cancelled) {
+        setSupabaseRows(data);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, isSupabaseTab]);
+
+  useEffect(() => {
+    if (!isSupabaseTab || !displayName) {
+      return;
+    }
+
+    let cancelled = false;
+
+    fetchPlayerBestForGame(tab, displayName).then((data) => {
+      if (!cancelled) {
+        setPlayerBest(data);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, isSupabaseTab, displayName]);
 
   if (!game) {
     return null;
   }
+
+  const showSupabaseYouRow = isSupabaseTab && displayName && playerBest;
+  const showMockYouRow = !isSupabaseTab && user;
 
   return (
     <div className="av-hall fade-in">
@@ -40,40 +98,42 @@ export default function HallOfFamePage() {
         ))}
       </div>
 
-      <div className="podium">
-        <div className="podium-slot silver">
-          <div className="rank-num">02</div>
-          <div className="name">{rows[1].name}</div>
-          <div className="score">{rows[1].score.toLocaleString("es-ES")}</div>
-          <div className="date">{rows[1].date}</div>
-        </div>
-        <div className="podium-slot gold">
-          <div
-            className="pixel"
-            style={{
-              fontSize: 9,
-              color: "var(--gold)",
-              letterSpacing: "0.18em",
-            }}
-          >
-            CAMPEÓN
+      {rows.length >= 3 && (
+        <div className="podium">
+          <div className="podium-slot silver">
+            <div className="rank-num">02</div>
+            <div className="name">{rows[1].name}</div>
+            <div className="score">{rows[1].score.toLocaleString("es-ES")}</div>
+            <div className="date">{rows[1].date}</div>
           </div>
-          <div className="rank-num" style={{ fontSize: 36, marginTop: 4 }}>
-            01
+          <div className="podium-slot gold">
+            <div
+              className="pixel"
+              style={{
+                fontSize: 9,
+                color: "var(--gold)",
+                letterSpacing: "0.18em",
+              }}
+            >
+              CAMPEÓN
+            </div>
+            <div className="rank-num" style={{ fontSize: 36, marginTop: 4 }}>
+              01
+            </div>
+            <div className="name">{rows[0].name}</div>
+            <div className="score" style={{ fontSize: 20 }}>
+              {rows[0].score.toLocaleString("es-ES")}
+            </div>
+            <div className="date">{rows[0].date}</div>
           </div>
-          <div className="name">{rows[0].name}</div>
-          <div className="score" style={{ fontSize: 20 }}>
-            {rows[0].score.toLocaleString("es-ES")}
+          <div className="podium-slot bronze">
+            <div className="rank-num">03</div>
+            <div className="name">{rows[2].name}</div>
+            <div className="score">{rows[2].score.toLocaleString("es-ES")}</div>
+            <div className="date">{rows[2].date}</div>
           </div>
-          <div className="date">{rows[0].date}</div>
         </div>
-        <div className="podium-slot bronze">
-          <div className="rank-num">03</div>
-          <div className="name">{rows[2].name}</div>
-          <div className="score">{rows[2].score.toLocaleString("es-ES")}</div>
-          <div className="date">{rows[2].date}</div>
-        </div>
-      </div>
+      )}
 
       <div className="hall-table">
         <div className="th">
@@ -94,7 +154,35 @@ export default function HallOfFamePage() {
             <div className="dt">{row.date}</div>
           </div>
         ))}
-        {user && (
+        {showSupabaseYouRow && (
+          <>
+            <div className="tr you-label">
+              ▸ TU MEJOR MARCA EN {game.title}
+            </div>
+            <div
+              className="tr you"
+              style={{ animationDelay: `${rows.length * 50 + 50}ms` }}
+            >
+              <div className="rk" style={{ color: "var(--yellow)" }}>
+                #{String(playerBest.rank).padStart(2, "0")}
+              </div>
+              <div className="pl" style={{ color: "var(--yellow)" }}>
+                {displayName}
+              </div>
+              <div
+                className="sc"
+                style={{
+                  color: "var(--yellow)",
+                  textShadow: "0 0 6px rgba(245,255,0,0.5)",
+                }}
+              >
+                {playerBest.score.toLocaleString("es-ES")}
+              </div>
+              <div className="dt">{playerBest.date}</div>
+            </div>
+          </>
+        )}
+        {showMockYouRow && (
           <>
             <div className="tr you-label">
               ▸ TU MEJOR MARCA EN {game.title}
