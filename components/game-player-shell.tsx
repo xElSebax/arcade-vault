@@ -84,10 +84,7 @@ export function GamePlayerShell({
         <div className="crt-screen">
           {arena}
           {paused && !over && (
-            <div
-              className="crt-content"
-              style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}
-            >
+            <div className="crt-content crt-overlay">
               <div>
                 <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
                   EN PAUSA
@@ -106,6 +103,39 @@ export function GamePlayerShell({
               </div>
             </div>
           )}
+          {over && (
+            <div className="crt-content crt-overlay crt-gameover">
+              <div className="crt-gameover-panel">
+                <h2>FIN DEL JUEGO</h2>
+                <div className="final-label">PUNTUACIÓN FINAL</div>
+                <div className="final">{score.toLocaleString("es-ES")}</div>
+                {!saved ? (
+                  <div className="input-row">
+                    <input
+                      value={playerName}
+                      onChange={(e) =>
+                        onInitialsChange(
+                          e.target.value.toUpperCase().slice(0, 10),
+                        )
+                      }
+                      placeholder="TUS INICIALES"
+                    />
+                    <Btn variant="yellow" onClick={onSaveScore}>
+                      GUARDAR PUNTUACIÓN
+                    </Btn>
+                  </div>
+                ) : (
+                  <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
+                )}
+                <div className="actions">
+                  <Btn onClick={onRestart}>JUGAR DE NUEVO</Btn>
+                  <Link href="/games" className="btn magenta">
+                    VOLVER AL VAULT
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="crt-bottom">
           <span className="led">SEÑAL OK</span>
@@ -115,38 +145,6 @@ export function GamePlayerShell({
           <span>CARGA · 1MB</span>
         </div>
       </div>
-
-      {over && (
-        <div className="modal-bd" onClick={() => {}}>
-          <div className="modal">
-            <h2>FIN DEL JUEGO</h2>
-            <div className="final-label">PUNTUACIÓN FINAL</div>
-            <div className="final">{score.toLocaleString("es-ES")}</div>
-            {!saved ? (
-              <div className="input-row">
-                <input
-                  value={playerName}
-                  onChange={(e) =>
-                    onInitialsChange(e.target.value.toUpperCase().slice(0, 10))
-                  }
-                  placeholder="TUS INICIALES"
-                />
-                <Btn variant="yellow" onClick={onSaveScore}>
-                  GUARDAR PUNTUACIÓN
-                </Btn>
-              </div>
-            ) : (
-              <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
-            )}
-            <div className="actions">
-              <Btn onClick={onRestart}>JUGAR DE NUEVO</Btn>
-              <Link href="/games" className="btn magenta">
-                VOLVER AL VAULT
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
