@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { Game } from "@/app/data";
-import { seededScores } from "@/app/data";
+import { getLeaderboardForGame } from "@/lib/data/leaderboard";
 
 interface GameDetailViewProps {
   game: Game;
 }
 
-export function GameDetailView({ game }: GameDetailViewProps) {
-  const scores = seededScores(game.id.length * 17 + 3, 10);
+export async function GameDetailView({ game }: GameDetailViewProps) {
+  const scores = await getLeaderboardForGame(game.id, 10);
 
   return (
     <div className="av-detail fade-in">
