@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
+import { AsteroidsCanvas } from "@/components/games/asteroids-canvas";
 import { useAuth } from "@/components/providers/auth-provider";
+import type { AsteroidsEngine, AsteroidsGameState } from "@/lib/games/asteroids/types";
 
-interface GamePlayerProps {
+interface AsteroidsPlayerProps {
   game: Game;
 }
 
-export function GamePlayer({ game }: GamePlayerProps) {
+export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
   const { user } = useAuth();
+  const engineRef = useRef<AsteroidsEngine | null>(null);
 
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
@@ -22,28 +25,26 @@ export function GamePlayer({ game }: GamePlayerProps) {
 
   const playerName = initials ?? user?.name ?? "INVITADO";
 
-  useEffect(() => {
-    if (over || paused) return;
-    const timer = setInterval(() => {
-      setScore((s) => {
-        const next = s + Math.floor(10 + Math.random() * 90);
-        if (next > 0 && next % 2500 < 100) {
-          setLevel((l) => l + 1);
-        }
-        return next;
-      });
-    }, 220);
-    return () => clearInterval(timer);
-  }, [over, paused]);
+  const handleStateChange = useCallback((state: AsteroidsGameState) => {
+    setScore(state.score);
+    setLives(state.lives);
+    setLevel(state.level);
+    if (state.phase === "gameover") {
+      setOver(true);
+    }
+  }, []);
+
+  const endGame = () => {
+    setOver(true);
+    setPaused(true);
+  };
 
   const restart = () => {
-    setScore(0);
-    setLives(3);
-    setLevel(1);
     setPaused(false);
     setOver(false);
     setSaved(false);
     setInitials(null);
+    engineRef.current?.reset();
   };
 
   return (
@@ -57,18 +58,16 @@ export function GamePlayer({ game }: GamePlayerProps) {
       over={over}
       saved={saved}
       onTogglePause={() => setPaused((p) => !p)}
-      onEndGame={() => setOver(true)}
+      onEndGame={endGame}
       onRestart={restart}
       onSaveScore={() => setSaved(true)}
       onInitialsChange={setInitials}
       arena={
-        <div className="game-arena">
-          <div className="grid-floor" />
-          <div className="enemy e1" />
-          <div className="enemy e2" />
-          <div className="enemy e3" />
-          <div className="player-ship" />
-        </div>
+        <AsteroidsCanvas
+          paused={paused || over}
+          onStateChange={handleStateChange}
+          engineRef={engineRef}
+        />
       }
     />
   );

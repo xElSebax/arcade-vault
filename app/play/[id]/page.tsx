@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { GAMES, getGameById } from "@/app/data";
+import { hasStaticGameRoute } from "@/app/data/static-game-routes";
 import { GamePlayer } from "@/components/game-player";
 
 interface PlayPageProps {
@@ -7,7 +8,9 @@ interface PlayPageProps {
 }
 
 export function generateStaticParams() {
-  return GAMES.map((game) => ({ id: game.id }));
+  return GAMES.filter((game) => !hasStaticGameRoute(game.id)).map((game) => ({
+    id: game.id,
+  }));
 }
 
 export default async function PlayPage({ params }: PlayPageProps) {
