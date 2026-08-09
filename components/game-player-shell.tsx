@@ -12,6 +12,8 @@ interface GamePlayerShellProps {
   score: number;
   lives: number;
   level: number;
+  lines?: number;
+  hideLives?: boolean;
   paused: boolean;
   over: boolean;
   saved: boolean;
@@ -30,6 +32,8 @@ export function GamePlayerShell({
   score,
   lives,
   level,
+  lines,
+  hideLives = false,
   paused,
   over,
   saved,
@@ -57,10 +61,18 @@ export function GamePlayerShell({
             <div className="l">Puntuación</div>
             <div className="v">{score.toLocaleString("es-ES")}</div>
           </div>
-          <div className="hud-stat lives">
-            <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
-          </div>
+          {lines !== undefined && (
+            <div className="hud-stat">
+              <div className="l">Líneas</div>
+              <div className="v">{lines}</div>
+            </div>
+          )}
+          {!hideLives && (
+            <div className="hud-stat lives">
+              <div className="l">Vidas</div>
+              <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
+            </div>
+          )}
           <div className="hud-stat level">
             <div className="l">Nivel</div>
             <div className="v">{String(level).padStart(2, "0")}</div>
