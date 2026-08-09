@@ -1,6 +1,6 @@
 # SPEC 07 — Tetris en Arcade Vault
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 05 — Juego Asteroids, SPEC 06 — Catálogo y leaderboard en Supabase
 > **Fecha:** 2026-08-09
 > **Objetivo:** Integrar el juego Tetris en `/play/tetris` portando `references/started-games/03-tetris` a un engine TypeScript modular, conservando el layout original (tablero + panel lateral con preview) y conectando leaderboard real en Supabase bajo `id: "tetris"`.
