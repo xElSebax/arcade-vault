@@ -18,7 +18,16 @@ Este archivo es la memoria persistente del proyecto. Cursor lo lee al inicio de 
 
 ## Skills
 
-Usa siempre /frontend-design para diseñar la interfaz de usuario.
+| Skill | Uso |
+|-------|-----|
+| `/frontend-design` | Diseñar la interfaz de usuario |
+| `@spec` | Diseñar un spec genérico antes de escribir código |
+| `@add-game` | Generar un spec unificado por juego (integración + leaderboard). **Extiende `@spec`** — lee primero la skill `/spec`, luego aplica patrones de SPEC 05 y SPEC 06. **No implementa código** — solo produce `specs/NN-slug.md` en `Borrador` |
+| `@spec-impl` | Implementar un spec en estado `Aprobado` |
+
+Usa siempre `/frontend-design` para diseñar la interfaz de usuario.
+
+Para integrar un juego nuevo: `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug`.
 
 ## Estructura del proyecto
 
@@ -82,4 +91,5 @@ Invocar con `@` en el chat:
 | Regla | Uso |
 |-------|-----|
 | `@spec` | Diseñar un spec antes de escribir código |
+| `@add-game` | Generar spec unificado por juego (integración + leaderboard) |
 | `@spec-impl` | Implementar un spec aprobado |
