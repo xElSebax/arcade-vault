@@ -4,7 +4,7 @@ import {
   getPlayerBestInGame,
 } from "@/lib/supabase/queries/scores";
 
-const SUPABASE_GAMES = new Set(["asteroids"]);
+const SUPABASE_GAMES = new Set(["asteroids", "tetris"]);
 
 export async function getLeaderboardForGame(
   gameId: string,
