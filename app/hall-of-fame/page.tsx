@@ -8,9 +8,8 @@ import {
 } from "@/app/actions/leaderboard";
 import { GAMES, seededScores, type ScoreRow } from "@/app/data";
 import { useAuth } from "@/components/providers/auth-provider";
-import { usePlayerName } from "@/lib/player-name";
-
-const SUPABASE_TAB = "asteroids";
+import { isSupabaseGame } from "@/lib/data/supabase-games";
+import { normalizePlayerName, usePlayerName } from "@/lib/player-name";
 
 export default function HallOfFamePage() {
   const { user } = useAuth();
@@ -23,18 +22,27 @@ export default function HallOfFamePage() {
     date: string;
   } | null>(null);
 
-  const isSupabaseTab = tab === SUPABASE_TAB;
+  const usesSupabase = isSupabaseGame(tab);
   const mockRows = useMemo(() => seededScores(tab.length * 23 + 7, 12), [tab]);
-  const rows = isSupabaseTab ? supabaseRows : mockRows;
+  const rows = usesSupabase ? supabaseRows : mockRows;
   const game = GAMES.find((g) => g.id === tab);
 
-  const displayName = storedName ?? user?.name ?? null;
+  const displayName =
+    storedName ?? (user?.name ? normalizePlayerName(user.name) : null);
+
+  const handleTabChange = (gameId: string) => {
+    if (gameId !== tab && isSupabaseGame(gameId)) {
+      setSupabaseRows([]);
+      setPlayerBest(null);
+    }
+    setTab(gameId);
+  };
 
   const youRank = user ? Math.floor(8 + (tab.length % 4)) : null;
   const youScore = user ? mockRows[5]?.score - 2400 : null;
 
   useEffect(() => {
-    if (!isSupabaseTab) {
+    if (!usesSupabase) {
       return;
     }
 
@@ -49,10 +57,10 @@ export default function HallOfFamePage() {
     return () => {
       cancelled = true;
     };
-  }, [tab, isSupabaseTab]);
+  }, [tab, usesSupabase]);
 
   useEffect(() => {
-    if (!isSupabaseTab || !displayName) {
+    if (!usesSupabase || !displayName) {
       return;
     }
 
@@ -67,14 +75,14 @@ export default function HallOfFamePage() {
     return () => {
       cancelled = true;
     };
-  }, [tab, isSupabaseTab, displayName]);
+  }, [tab, usesSupabase, displayName]);
 
   if (!game) {
     return null;
   }
 
-  const showSupabaseYouRow = isSupabaseTab && displayName && playerBest;
-  const showMockYouRow = !isSupabaseTab && user;
+  const showSupabaseYouRow = usesSupabase && displayName && playerBest;
+  const showMockYouRow = !usesSupabase && user;
 
   return (
     <div className="av-hall fade-in">
@@ -91,7 +99,7 @@ export default function HallOfFamePage() {
             key={g.id}
             type="button"
             className={`chip${tab === g.id ? " active" : ""}`}
-            onClick={() => setTab(g.id)}
+            onClick={() => handleTabChange(g.id)}
           >
             {g.title}
           </button>

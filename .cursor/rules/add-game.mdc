@@ -1,0 +1,36 @@
+---
+description: Generates a unified per-game spec (engine + leaderboard) for Arcade Vault. Use when planning a new game integration or porting from references/started-games/. Does NOT implement code.
+alwaysApply: false
+---
+
+# /add-game — Unified game integration spec generator
+
+This rule triggers the **add-game** skill. Read `.claude/skills/add-game/SKILL.md` and follow it strictly.
+
+**Prerequisite:** also read `.claude/skills/spec/SKILL.md` and `.claude/skills/spec/template.md` before writing any spec file. `@add-game` extends `@spec` with game-integration content from SPEC 05 and SPEC 06.
+
+## What this does
+
+- Generates `specs/NN-{slug}.md` merging SPEC 05 (game integration) and SPEC 06 (Supabase leaderboard) patterns
+- Follows the `/spec` method (questions, section-by-section confirmation, save as `Borrador`)
+- Supports games with or without a reference in `references/started-games/`
+
+## What this does NOT do
+
+- Write application code, migrations, CSS, or React components
+- Create git branches or mark specs as `Aprobado`
+- Implement the spec — that is `@spec-impl` after human approval
+
+## Supporting files
+
+- `.claude/skills/spec/SKILL.md` + `spec/template.md` — base spec-driven method (read first)
+- `.claude/skills/add-game/template.md` — unified game spec structure
+- `.claude/skills/add-game/reference.md` — inherited defaults, file trees, anti-patterns
+
+## Workflow summary
+
+1. **Context** — read `/spec` skill + template, then specs 05/06, list `specs/` for next number
+2. **Analyze** — resolve slug, reference path, catalog entry
+3. **Clarify** — targeted questions (gameplay, scope, leaderboard)
+4. **Spec sections** — one at a time, user confirms each
+5. **Save** — write `specs/NN-{slug}.md` as `Borrador`, seed `.spec-config.yml` if missing, then **STOP**
