@@ -41,8 +41,8 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
     (state: SnakeGameState) => {
       setScore(state.score);
       setLength(state.length);
+      setOver(state.phase === "gameover");
       if (state.phase === "gameover") {
-        setOver(true);
         prefillPlayerName();
       }
     },
