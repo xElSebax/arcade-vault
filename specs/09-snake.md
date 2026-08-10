@@ -1,6 +1,6 @@
 # SPEC 09 — Snake en Arcade Vault
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 05 — Juego Asteroids, SPEC 06 — Catálogo y leaderboard en Supabase
 > **Fecha:** 2026-08-10
 > **Objetivo:** Integrar el juego Snake en `/play/snake` con engine TypeScript desde cero (sin referencia en `started-games`), sprites de frutas desde `references/source-assets/snake-assets`, shell del reproductor (HUD, pausa, fin de partida en CRT) y leaderboard real en Supabase.
@@ -237,45 +237,45 @@ Si `length` no encaja en el shell actual, mostrar longitud solo en el canvas del
 ## Criterios de aceptación
 
 ### Catálogo
-- [ ] `snake` aparece en `/games` con título SNAKE, categoría ARCADE y cover `cover-snake-game`
-- [ ] `serpentina` sigue visible sin cambios en catálogo ni cover
-- [ ] `/games/snake` muestra detalle con CTA **JUGAR** → `/play/snake`
+- [x] `snake` aparece en `/games` con título SNAKE, categoría ARCADE y cover `cover-snake-game`
+- [x] `serpentina` sigue visible sin cambios en catálogo ni cover
+- [x] `/games/snake` muestra detalle con CTA **JUGAR** → `/play/snake`
 
 ### Juego jugable
-- [ ] `/play/snake` carga canvas 600×600 dentro del marco CRT
-- [ ] Grilla 30×30 visible; serpiente con cabeza diferenciada y cuerpo verde neón
-- [ ] Frutas aleatorias del atlas pixel art; todas valen +10 puntos
-- [ ] Controles: `←` `→` `↑` `↓` y `W` `A` `S` `D`; no permite giro 180° instantáneo
-- [ ] Chocar con pared → game over
-- [ ] Chocar con el propio cuerpo → game over
-- [ ] Cada fruta comida alarga la serpiente en 1 segmento
-- [ ] Velocidad aumenta cada 5 frutas comidas (hasta tope `SPEED_MIN`)
-- [ ] Una sola vida: sin sistema de vidas ni respawn
+- [x] `/play/snake` carga canvas 600×600 dentro del marco CRT
+- [x] Grilla 30×30 visible; serpiente con cabeza diferenciada y cuerpo verde neón
+- [x] Frutas aleatorias del atlas pixel art; todas valen +10 puntos
+- [x] Controles: `←` `→` `↑` `↓` y `W` `A` `S` `D`; no permite giro 180° instantáneo
+- [x] Chocar con pared → game over
+- [x] Chocar con el propio cuerpo → game over
+- [x] Cada fruta comida alarga la serpiente en 1 segmento
+- [x] Velocidad aumenta cada 5 frutas comidas (hasta tope `SPEED_MIN`)
+- [x] Una sola vida: sin sistema de vidas ni respawn
 
 ### HUD y shell
-- [ ] HUD externo muestra Puntuación y Longitud (sin stat de Vidas)
-- [ ] PAUSA detiene el loop; REANUDAR lo reanida
-- [ ] Game over muestra overlay dentro del CRT (no en canvas del engine)
-- [ ] **JUGAR DE NUEVO** llama a `engine.reset()`
-- [ ] SALIR navega a `/games/snake`
+- [x] HUD externo muestra Puntuación y Longitud (sin stat de Vidas)
+- [x] PAUSA detiene el loop; REANUDAR lo reanida
+- [x] Game over muestra overlay dentro del CRT (no en canvas del engine)
+- [x] **JUGAR DE NUEVO** llama a `engine.reset()`
+- [x] SALIR navega a `/games/snake`
 
 ### Leaderboard
-- [ ] `/games/snake` muestra ranking desde Supabase
-- [ ] `/hall-of-fame` tab **SNAKE** muestra ranking real
-- [ ] **GUARDAR PUNTUACIÓN** inserta en `scores` con `user_id = null`
-- [ ] Nombre recordado en `localStorage` (`av_player_name`)
-- [ ] Fila **TU MEJOR MARCA** si hay nombre guardado y scores en BD
-- [ ] Fila `snake` existe en `public.games` en Supabase (verificado tras aplicar seed vía plugin/MCP)
+- [x] `/games/snake` muestra ranking desde Supabase
+- [x] `/hall-of-fame` tab **SNAKE** muestra ranking real
+- [x] **GUARDAR PUNTUACIÓN** inserta en `scores` con `user_id = null`
+- [x] Nombre recordado en `localStorage` (`av_player_name`)
+- [x] Fila **TU MEJOR MARCA** si hay nombre guardado y scores en BD
+- [x] Fila `snake` existe en `public.games` en Supabase (verificado tras aplicar seed vía plugin/MCP)
 
 ### Regresión
-- [ ] `serpentina` sigue como placeholder sin ruta de juego
-- [ ] Asteroids, Tetris y Arkanoid siguen funcionando con normalidad
+- [x] `serpentina` sigue como placeholder sin ruta de juego
+- [x] Asteroids, Tetris y Arkanoid siguen funcionando con normalidad
 
 ### Técnico
-- [ ] Sin errores de consola relevantes
-- [ ] Sin errores TypeScript/ESLint en archivos del juego
-- [ ] Engine se desmonta limpiamente al salir de `/play/snake`
-- [ ] `npm run build` sin errores
+- [x] Sin errores de consola relevantes
+- [x] Sin errores TypeScript/ESLint en archivos del juego
+- [x] Engine se desmonta limpiamente al salir de `/play/snake`
+- [x] `npm run build` sin errores
 
 ## Decisiones
 
