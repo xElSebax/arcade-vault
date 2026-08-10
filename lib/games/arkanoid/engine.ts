@@ -23,6 +23,12 @@ import {
 } from "./entities/paddle";
 import { LEVELS } from "./levels";
 import {
+  disposeSounds,
+  loadSounds,
+  playSound,
+  unlockSounds,
+} from "./sounds";
+import {
   drawFrame,
   drawSprite,
   EXPLOSION_FRAMES,
@@ -90,9 +96,14 @@ export function createArkanoidEngine(): ArkanoidEngine {
     loadLevel(1);
   }
 
+  function onPointerDown(): void {
+    unlockSounds();
+  }
+
   function onKeyDown(e: KeyboardEvent): void {
     if (e.code !== "ArrowLeft" && e.code !== "ArrowRight") return;
     e.preventDefault();
+    unlockSounds();
     keys[e.code] = true;
   }
 
@@ -125,14 +136,17 @@ export function createArkanoidEngine(): ArkanoidEngine {
     if (ball.x <= 0) {
       ball.x = 0;
       ball.vx = Math.abs(ball.vx);
+      playSound("bounce");
     }
     if (ball.x + ball.w >= W) {
       ball.x = W - ball.w;
       ball.vx = -Math.abs(ball.vx);
+      playSound("bounce");
     }
     if (ball.y <= 0) {
       ball.y = 0;
       ball.vy = Math.abs(ball.vy);
+      playSound("bounce");
     }
 
     if (
@@ -144,6 +158,7 @@ export function createArkanoidEngine(): ArkanoidEngine {
     ) {
       ball.y = paddle.y - ball.h;
       ball.vy = -Math.abs(ball.vy);
+      playSound("bounce");
     }
 
     for (const block of blocks) {
@@ -153,6 +168,7 @@ export function createArkanoidEngine(): ArkanoidEngine {
         explosions.push(createExplosion(block));
         score += BLOCK_SCORE;
         ball.vy = -ball.vy;
+        playSound("break");
         if (allBlocksDestroyed(blocks)) {
           if (level < 5) {
             loadLevel(level + 1);
@@ -270,9 +286,11 @@ export function createArkanoidEngine(): ArkanoidEngine {
       window.addEventListener("keydown", onKeyDown);
       window.addEventListener("keyup", onKeyUp);
       canvas.addEventListener("mousemove", onMouseMove);
+      canvas.addEventListener("pointerdown", onPointerDown);
 
       const begin = () => {
         spritesReady = true;
+        loadSounds();
         initGame();
         startLoop();
       };
@@ -290,11 +308,14 @@ export function createArkanoidEngine(): ArkanoidEngine {
       window.removeEventListener("keyup", onKeyUp);
       if (canvas) {
         canvas.removeEventListener("mousemove", onMouseMove);
+        canvas.removeEventListener("pointerdown", onPointerDown);
       }
 
       for (const key of Object.keys(keys)) {
         delete keys[key];
       }
+
+      disposeSounds();
 
       canvas = null;
       ctx = null;
