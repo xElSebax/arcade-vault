@@ -16,6 +16,7 @@ interface GamePlayerShellProps {
   hideLives?: boolean;
   paused: boolean;
   over: boolean;
+  won?: boolean;
   saved: boolean;
   onTogglePause: () => void;
   onEndGame: () => void;
@@ -36,6 +37,7 @@ export function GamePlayerShell({
   hideLives = false,
   paused,
   over,
+  won = false,
   saved,
   onTogglePause,
   onEndGame,
@@ -120,7 +122,7 @@ export function GamePlayerShell({
           {over && (
             <div className="crt-content crt-overlay crt-gameover">
               <div className="crt-gameover-panel">
-                <h2>FIN DEL JUEGO</h2>
+                <h2>{won ? "¡VICTORIA!" : "FIN DEL JUEGO"}</h2>
                 <div className="final-label">PUNTUACIÓN FINAL</div>
                 <div className="final">{score.toLocaleString("es-ES")}</div>
                 {!saved ? (

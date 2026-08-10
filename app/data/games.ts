@@ -104,6 +104,17 @@ export const GAMES: Game[] = [
     plays: "0",
   },
   {
+    id: "arkanoid",
+    title: "ARKANOID",
+    short: "Rebota la pelota y destruye todos los bloques.",
+    long: "Controla la paleta, devuelve la pelota y pulveriza cinco layouts de bloques de neón. Cada nivel acelera la pelota. Tres vidas. ¿Llegas al final?",
+    cat: "ARCADE",
+    cover: "cover-arkanoid",
+    color: "magenta",
+    best: 0,
+    plays: "0",
+  },
+  {
     id: "ranaria",
     title: "RANARIA",
     short: "Cruza la autopista de pixeles.",
