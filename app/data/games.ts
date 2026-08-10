@@ -115,6 +115,17 @@ export const GAMES: Game[] = [
     plays: "0",
   },
   {
+    id: "snake",
+    title: "SNAKE",
+    short: "Come frutas, crece y no te muerdas la cola.",
+    long: "Una serpiente de neón recorre la grilla buscando frutas. Cada bocado la alarga y la acelera. Choca con una pared o contigo misma y la partida termina.",
+    cat: "ARCADE",
+    cover: "cover-snake-game",
+    color: "green",
+    best: 0,
+    plays: "0",
+  },
+  {
     id: "ranaria",
     title: "RANARIA",
     short: "Cruza la autopista de pixeles.",

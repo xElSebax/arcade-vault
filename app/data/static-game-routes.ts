@@ -1,5 +1,5 @@
 /** Game ids with a dedicated static route under app/games/{id} and app/play/{id}. */
-export const STATIC_GAME_ROUTES = ["asteroids", "tetris", "arkanoid"] as const;
+export const STATIC_GAME_ROUTES = ["asteroids", "tetris", "arkanoid", "snake"] as const;
 
 export type StaticGameRoute = (typeof STATIC_GAME_ROUTES)[number];
 

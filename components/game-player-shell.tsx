@@ -13,6 +13,7 @@ interface GamePlayerShellProps {
   lives: number;
   level: number;
   lines?: number;
+  length?: number;
   hideLives?: boolean;
   paused: boolean;
   over: boolean;
@@ -34,6 +35,7 @@ export function GamePlayerShell({
   lives,
   level,
   lines,
+  length,
   hideLives = false,
   paused,
   over,
@@ -69,16 +71,24 @@ export function GamePlayerShell({
               <div className="v">{lines}</div>
             </div>
           )}
+          {length !== undefined && (
+            <div className="hud-stat">
+              <div className="l">Longitud</div>
+              <div className="v">{length}</div>
+            </div>
+          )}
           {!hideLives && (
             <div className="hud-stat lives">
               <div className="l">Vidas</div>
               <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
             </div>
           )}
-          <div className="hud-stat level">
-            <div className="l">Nivel</div>
-            <div className="v">{String(level).padStart(2, "0")}</div>
-          </div>
+          {length === undefined && (
+            <div className="hud-stat level">
+              <div className="l">Nivel</div>
+              <div className="v">{String(level).padStart(2, "0")}</div>
+            </div>
+          )}
         </div>
         <div className="hud-actions">
           <Btn variant="yellow" onClick={onTogglePause}>
