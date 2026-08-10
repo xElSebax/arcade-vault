@@ -1,0 +1,113 @@
+"use client";
+
+import { useCallback, useRef, useState } from "react";
+import { saveScore } from "@/app/actions/save-score";
+import type { Game } from "@/app/data";
+import { GamePlayerShell } from "@/components/game-player-shell";
+import { SnakeCanvas } from "@/components/games/snake-canvas";
+import { useAuth } from "@/components/providers/auth-provider";
+import type { SnakeEngine, SnakeGameState } from "@/lib/games/snake/types";
+import { usePlayerName, writePlayerName } from "@/lib/player-name";
+
+interface SnakePlayerProps {
+  game: Game;
+}
+
+export function SnakePlayer({ game }: SnakePlayerProps) {
+  const { user } = useAuth();
+  const storedName = usePlayerName();
+  const engineRef = useRef<SnakeEngine | null>(null);
+
+  const [score, setScore] = useState(0);
+  const [length, setLength] = useState(3);
+  const [paused, setPaused] = useState(false);
+  const [over, setOver] = useState(false);
+  const [initials, setInitials] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const getDefaultPlayerName = useCallback(
+    () => storedName ?? user?.name ?? "INVITADO",
+    [storedName, user?.name],
+  );
+
+  const playerName = initials ?? getDefaultPlayerName();
+
+  const prefillPlayerName = useCallback(() => {
+    setInitials((prev) => prev ?? getDefaultPlayerName());
+  }, [getDefaultPlayerName]);
+
+  const handleStateChange = useCallback(
+    (state: SnakeGameState) => {
+      setScore(state.score);
+      setLength(state.length);
+      if (state.phase === "gameover") {
+        setOver(true);
+        prefillPlayerName();
+      }
+    },
+    [prefillPlayerName],
+  );
+
+  const endGame = () => {
+    setOver(true);
+    setPaused(true);
+    prefillPlayerName();
+  };
+
+  const restart = () => {
+    setPaused(false);
+    setOver(false);
+    setSaved(false);
+    setSaveError(null);
+    setInitials(null);
+    engineRef.current?.reset();
+  };
+
+  const handleSaveScore = async () => {
+    if (saved) return;
+
+    setSaveError(null);
+
+    const result = await saveScore({
+      gameId: game.id,
+      playerName: initials ?? getDefaultPlayerName(),
+      score,
+    });
+
+    if (result.ok) {
+      writePlayerName(initials ?? getDefaultPlayerName());
+      setSaved(true);
+    } else {
+      setSaveError(result.error);
+    }
+  };
+
+  return (
+    <GamePlayerShell
+      game={game}
+      playerName={playerName}
+      score={score}
+      lives={0}
+      level={1}
+      length={length}
+      hideLives
+      paused={paused}
+      over={over}
+      saved={saved}
+      onTogglePause={() => setPaused((p) => !p)}
+      onEndGame={endGame}
+      onRestart={restart}
+      onSaveScore={handleSaveScore}
+      onInitialsChange={setInitials}
+      saveError={saveError}
+      arena={
+        <SnakeCanvas
+          paused={paused || over}
+          onStateChange={handleStateChange}
+          engineRef={engineRef}
+        />
+      }
+    />
+  );
+}
