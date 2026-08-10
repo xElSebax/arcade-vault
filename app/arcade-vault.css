@@ -549,6 +549,38 @@ a { color: inherit; text-decoration: none; }
     -28px 18px 0 -6px rgba(255, 60, 0, 0.4);
 }
 
+.cover-arkanoid {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 0, 110, 0.15) 0, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(170, 0, 255, 0.1) 0, transparent 40%),
+    linear-gradient(180deg, #1a0028, #0a0a18);
+}
+.cover-arkanoid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg,
+      #ff006e 0 14px, #aa00ff 14px 28px, #00f5ff 28px 42px, #f5ff00 42px 56px) 22% 18%/56% 10px,
+    repeating-linear-gradient(90deg,
+      #00ff88 0 14px, #ff7700 14px 28px, #ff006e 28px 42px, #00f5ff 42px 56px) 22% 30%/56% 10px,
+    repeating-linear-gradient(90deg,
+      #aa00ff 0 14px, #f5ff00 14px 28px, #00ff88 28px 42px, #ff7700 42px 56px) 22% 42%/56% 10px,
+    linear-gradient(var(--magenta), var(--magenta)) 30% 78%/40% 5px no-repeat;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 8px rgba(255, 0, 110, 0.5));
+  image-rendering: pixelated;
+}
+.cover-arkanoid::before {
+  content: "";
+  position: absolute;
+  left: 42%; top: 58%;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 8px var(--yellow);
+}
+
 .cover-rana { background: linear-gradient(180deg,#001f2a,#0a0a18); }
 .cover-rana::after {
   content: "";
