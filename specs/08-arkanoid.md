@@ -1,6 +1,6 @@
 # SPEC 08 — Arkanoid en Arcade Vault
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 05 — Juego Asteroids, SPEC 06 — Catálogo y leaderboard en Supabase, SPEC 07 — Tetris (patrón `isSupabaseGame`)
 > **Fecha:** 2026-08-10
 > **Objetivo:** Integrar el juego Arkanoid en `/play/arkanoid` portando `references/started-games/04-arkanoid` a un engine TypeScript modular con spritesheet y 5 niveles, HUD en el shell externo, overlay CRT de fin de partida (derrota o victoria) con guardado de puntuación en Supabase bajo `id: "arkanoid"`.
