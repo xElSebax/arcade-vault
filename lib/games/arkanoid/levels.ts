@@ -1,4 +1,4 @@
-import type { BlockColor } from "../types";
+import type { BlockColor } from "./types";
 
 export interface LevelBlockDef {
   col: number;
