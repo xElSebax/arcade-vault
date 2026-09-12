@@ -8,6 +8,7 @@ import type {
   ArkanoidGameState,
 } from "@/lib/games/arkanoid/types";
 import type { GameSkinId } from "@/lib/games/skins/types";
+import { EMPTY_VIRTUAL_INPUT } from "@/lib/games/touch-controls/types";
 
 interface ArkanoidCanvasProps {
   paused: boolean;
@@ -57,6 +58,7 @@ export function ArkanoidCanvas({
     if (!engine) return;
 
     if (paused) {
+      engine.setVirtualInput(EMPTY_VIRTUAL_INPUT);
       engine.pause();
     } else {
       engine.resume();

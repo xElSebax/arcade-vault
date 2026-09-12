@@ -5,8 +5,15 @@ import { saveScore } from "@/app/actions/save-score";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { AsteroidsCanvas } from "@/components/games/asteroids-canvas";
+import { VirtualGameControls } from "@/components/virtual-game-controls";
 import { useAuth } from "@/components/providers/auth-provider";
 import type { AsteroidsEngine, AsteroidsGameState } from "@/lib/games/asteroids/types";
+import { useTouchPlayMode } from "@/lib/games/touch-controls/detect-touch-mode";
+import { TOUCH_MAPS } from "@/lib/games/touch-controls/maps";
+import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
 import { useGameSkin } from "@/lib/player-skin";
 import { usePlayerName, writePlayerName } from "@/lib/player-name";
 
@@ -18,6 +25,7 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
   const [skin, setSkin] = useGameSkin(game.id);
+  const touchMode = useTouchPlayMode();
   const engineRef = useRef<AsteroidsEngine | null>(null);
 
   const [score, setScore] = useState(0);
@@ -68,6 +76,14 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
     engineRef.current?.reset();
   };
 
+  const handleVirtualInput = useCallback((state: VirtualInputState) => {
+    engineRef.current?.setVirtualInput(state);
+  }, []);
+
+  const handleActionPulse = useCallback((action: TouchAction) => {
+    engineRef.current?.pulseVirtualAction(action);
+  }, []);
+
   const handleSaveScore = async () => {
     if (saved) return;
 
@@ -105,6 +121,17 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
       onSaveScore={handleSaveScore}
       onInitialsChange={setInitials}
       saveError={saveError}
+      touchMode={touchMode}
+      touchControls={
+        touchMode && !paused && !over ? (
+          <VirtualGameControls
+            map={TOUCH_MAPS.asteroids}
+            onInputChange={handleVirtualInput}
+            onActionPulse={handleActionPulse}
+            controlsLabel={`Controles de ${game.title}`}
+          />
+        ) : undefined
+      }
       arena={
         <AsteroidsCanvas
           paused={paused || over}

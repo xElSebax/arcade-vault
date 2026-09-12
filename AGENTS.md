@@ -67,7 +67,7 @@ supabase/migrations/                 # Seed del juego en tabla games
 **Pipeline de integración (clásico):**
 
 ```
-@game-planner → elegir juego → @add-game {slug} → Aprobado → @spec-impl NN-slug
+@game-planner → elegir juego → @add-game {slug} → Aprobado → @spec-impl NN-slug → @mobile-porter {slug}
 ```
 
 **Pipeline creativo (game jam):**
@@ -138,6 +138,27 @@ Configura los tres skins visuales (**classic**, **retro**, **neon**) para **un j
 
 **Estados por skin en el inventario:** `pendiente` · `en_progreso` · `completo`
 
+## Agente `@mobile-porter`
+
+Audita y corrige la experiencia móvil (touch play + layout CRT) para **un juego jugable a la vez**. Mantiene el inventario en `references/mobile-porter/coverage-log.md`. Referencia canónica: SPEC 10.
+
+| Aspecto | Detalle |
+|---------|---------|
+| Invocación | `@mobile-porter` o `/mobile-porter` · argumento: slug del juego (`asteroids`, `tetris`, `arkanoid`, `snake`) |
+| Subagente (contexto limpio) | [`.cursor/agents/mobile-porter.md`](.cursor/agents/mobile-porter.md) — delegar cuando el usuario pida explícitamente el agente `@mobile-porter` |
+| Skill | [`.claude/skills/mobile-porter/SKILL.md`](.claude/skills/mobile-porter/SKILL.md) |
+| Guía de cableado | [`.claude/skills/mobile-porter/touch-integration-guide.md`](.claude/skills/mobile-porter/touch-integration-guide.md) |
+| Checklist | [`.claude/skills/mobile-porter/mobile-game-checklist.md`](.claude/skills/mobile-porter/mobile-game-checklist.md) |
+| Spec canónico | [`specs/10-controles-tactiles-movil.md`](specs/10-controles-tactiles-movil.md) |
+| Memoria | [`references/mobile-porter/coverage-log.md`](references/mobile-porter/coverage-log.md) — inventario versionado en git |
+| Regla Cursor | [`.cursor/rules/mobile-porter.mdc`](.cursor/rules/mobile-porter.mdc) |
+
+**Qué hace:** lee el inventario, confirma un solo juego por sesión, audita criterios de SPEC 10, corrige wiring/engine/CSS táctil si hay gaps, verifica desktop sin regresiones, actualiza la fila del juego en `coverage-log.md`.
+
+**Qué no hace:** no modifica landing/biblioteca/salón/about; no aplica touch a todos los jugables de golpe; no marca specs como `Aprobado`; no toca placeholders salvo petición explícita; no implementa PWA ni app nativa.
+
+**Estados por columna en el inventario:** `pendiente` · `en_progreso` · `completo` · `parcial`
+
 ## Skills
 
 Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar con `/` en Claude Code o `@` en Cursor.
@@ -148,13 +169,14 @@ Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar 
 | `@game-planner` | Evaluar qué juego retro encaja en la plataforma; mantener memoria en `references/game-planner/suggestions-log.md`. **No escribe specs** — handoff a `@add-game`. |
 | `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/`. **No implementa código** — promover variante elegida a `specs/NN-{slug}.md` antes de `@spec-impl`. |
 | `@skin-designer` | Aplicar skins classic/retro/neon a **un juego a la vez**; memoria en `references/skin-designer/game-with-themes.md`. |
+| `@mobile-porter` | Auditar y corregir touch play móvil en **un juego a la vez**; memoria en `references/mobile-porter/coverage-log.md`. |
 | `@spec` | Diseñar un spec genérico antes de escribir código. |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard). **Extiende `@spec`** — lee primero `/spec`, luego aplica patrones de SPEC 05 y SPEC 06. **No implementa código** — solo produce `specs/NN-slug.md` en `Borrador`. |
 | `@spec-impl` | Implementar un spec en estado `Aprobado`. |
 
 Usa siempre `/frontend-design` para diseñar la interfaz de usuario.
 
-Para integrar un juego clásico: `@game-planner` → elegir juego → `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug`.
+Para integrar un juego clásico: `@game-planner` → elegir juego → `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug` → `@mobile-porter {slug}`.
 
 Para un juego temático: `@game-jam {tema}` → revisar variantes → promover a `specs/NN-{slug}.md` → `Aprobado` → `@spec-impl NN-slug`.
 
@@ -194,11 +216,12 @@ references/
   game-planner/           # Memoria de sugerencias (@game-planner)
   game-jam/               # Memoria de sesiones jam (@game-jam)
   skin-designer/          # Inventario de skins por juego (@skin-designer)
+  mobile-porter/          # Inventario de cobertura táctil (@mobile-porter)
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
   source-assets/          # Assets fuente
-.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, @game-planner, @game-jam, @skin-designer, nextjs)
-.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, game-planner, game-jam, skin-designer, frontend-design)
+.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, @game-planner, @game-jam, @skin-designer, @mobile-porter, nextjs)
+.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, game-planner, game-jam, skin-designer, mobile-porter, frontend-design)
 ```
 
 Alias de importación: `@/*` apunta a la raíz del proyecto.
@@ -268,6 +291,7 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 | 07 | Juego Tetris | Implementado |
 | 08 | Juego Arkanoid | Implementado |
 | 09 | Juego Snake | Implementado |
+| 10 | Controles táctiles móvil | Implementado |
 
 ### Ciclo de trabajo
 
@@ -323,6 +347,7 @@ Invocar con `@` en el chat:
 | `@game-planner` | Evaluar qué juego retro encaja; memoria en `references/game-planner/suggestions-log.md` |
 | `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/` |
 | `@skin-designer` | Skins classic/retro/neon por juego; inventario en `references/skin-designer/game-with-themes.md` |
+| `@mobile-porter` | Touch play móvil por juego; inventario en `references/mobile-porter/coverage-log.md` |
 | `@spec` | Diseñar un spec antes de escribir código |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard) |
 | `@spec-impl` | Implementar un spec aprobado |

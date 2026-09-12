@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import type { Game } from "@/app/data";
 import { Btn } from "@/components/btn";
 import { GameSkinSelector } from "@/components/game-skin-selector";
+import { useTouchPlayChrome } from "@/lib/games/touch-controls/use-touch-play-chrome";
 import type { GameSkinId } from "@/lib/games/skins/types";
 
 interface GamePlayerShellProps {
@@ -29,6 +30,8 @@ interface GamePlayerShellProps {
   saveError?: string | null;
   skin?: GameSkinId;
   onSkinChange?: (skin: GameSkinId) => void;
+  touchMode?: boolean;
+  touchControls?: ReactNode;
   arena: ReactNode;
 }
 
@@ -53,12 +56,28 @@ export function GamePlayerShell({
   saveError,
   skin,
   onSkinChange,
+  touchMode = false,
+  touchControls,
   arena,
 }: GamePlayerShellProps) {
   const router = useRouter();
+  const overlayOpen = paused || over;
+  const showGameControls = touchMode && !overlayOpen && touchControls;
+
+  useTouchPlayChrome(touchMode, overlayOpen);
 
   return (
-    <div className="av-player fade-in">
+    <div
+      className={[
+        "av-player",
+        "fade-in",
+        touchMode ? "av-player--touch" : "",
+        touchMode && !overlayOpen ? "av-player--active-touch" : "",
+        touchMode && overlayOpen ? "av-player--touch-overlay" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
@@ -96,23 +115,25 @@ export function GamePlayerShell({
             </div>
           )}
         </div>
-        <div className="hud-actions">
-          {skin && onSkinChange && (
-            <GameSkinSelector skin={skin} onSkinChange={onSkinChange} />
-          )}
-          <Btn variant="yellow" onClick={onTogglePause}>
-            {paused ? "REANUDAR" : "PAUSA"}
-          </Btn>
-          <Btn variant="magenta" onClick={onEndGame}>
-            FIN
-          </Btn>
-          <Btn
-            variant="ghost"
-            onClick={() => router.push(`/games/${game.id}`)}
-          >
-            SALIR
-          </Btn>
-        </div>
+        {!touchMode && (
+          <div className="hud-actions">
+            {skin && onSkinChange && (
+              <GameSkinSelector skin={skin} onSkinChange={onSkinChange} />
+            )}
+            <Btn variant="yellow" onClick={onTogglePause}>
+              {paused ? "REANUDAR" : "PAUSA"}
+            </Btn>
+            <Btn variant="magenta" onClick={onEndGame}>
+              FIN
+            </Btn>
+            <Btn
+              variant="ghost"
+              onClick={() => router.push(`/games/${game.id}`)}
+            >
+              SALIR
+            </Btn>
+          </div>
+        )}
       </div>
 
       <div className="crt">
@@ -194,6 +215,37 @@ export function GamePlayerShell({
           <span>CARGA · 1MB</span>
         </div>
       </div>
+
+      {touchMode && (
+        <div className="av-touch-bar">
+          {showGameControls && (
+            <div className="av-touch-bar__controls">{touchControls}</div>
+          )}
+          <div className="av-touch-bar__toolbar">
+            {skin && onSkinChange && (
+              <GameSkinSelector
+                variant="compact"
+                skin={skin}
+                onSkinChange={onSkinChange}
+              />
+            )}
+            <div className="av-touch-bar__actions">
+              <Btn variant="yellow" onClick={onTogglePause}>
+                {paused ? "REANUDAR" : "PAUSA"}
+              </Btn>
+              <Btn variant="magenta" onClick={onEndGame}>
+                FIN
+              </Btn>
+              <Btn
+                variant="ghost"
+                onClick={() => router.push(`/games/${game.id}`)}
+              >
+                SALIR
+              </Btn>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

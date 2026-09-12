@@ -5,6 +5,7 @@ import { H, W } from "@/lib/games/snake/constants";
 import { createSnakeEngine } from "@/lib/games/snake/engine";
 import type { SnakeEngine, SnakeGameState } from "@/lib/games/snake/types";
 import type { GameSkinId } from "@/lib/games/skins/types";
+import { EMPTY_VIRTUAL_INPUT } from "@/lib/games/touch-controls/types";
 
 interface SnakeCanvasProps {
   paused: boolean;
@@ -54,6 +55,7 @@ export function SnakeCanvas({
     if (!engine) return;
 
     if (paused) {
+      engine.setVirtualInput(EMPTY_VIRTUAL_INPUT);
       engine.pause();
     } else {
       engine.resume();

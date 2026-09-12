@@ -1,0 +1,57 @@
+---
+description: Audits and fixes mobile touch play (virtual controls + CRT layout) for one Arcade Vault playable at a time. Maintains references/mobile-porter/coverage-log.md. Use with @mobile-porter {slug}.
+alwaysApply: false
+---
+
+# /mobile-porter — Per-game mobile touch audit and fixes
+
+This rule triggers the **mobile-porter** skill. Read `.claude/skills/mobile-porter/SKILL.md` and follow it strictly.
+
+## What this does
+
+- Takes a **game slug** (e.g. `asteroids`, `tetris`) — **one game per session**
+- Audits touch play against SPEC 10 and `mobile-game-checklist.md`
+- Fixes gaps in engine API, player wiring, canvas cleanup, and touch CSS
+- Verifies desktop keyboard has no regressions
+- Updates inventory in `references/mobile-porter/coverage-log.md`
+
+## What this does NOT do
+
+- Modify landing, library, hall of fame, about, or other non-game pages
+- Audit or fix all playables in one go
+- Write specs or mark them as `Aprobado`
+- Implement PWA, native fullscreen, or haptic feedback
+- Touch placeholders until integrated (unless explicitly requested)
+
+## Supporting files
+
+- `.claude/skills/mobile-porter/SKILL.md` — five-phase workflow and hard rules
+- `.claude/skills/mobile-porter/touch-integration-guide.md` — wiring patterns and constants
+- `.claude/skills/mobile-porter/mobile-game-checklist.md` — per-game audit checklist
+- `specs/10-controles-tactiles-movil.md` — canonical touch play spec
+- `references/mobile-porter/coverage-log.md` — mobile coverage inventory (read at start, update at end)
+
+## Workflow summary
+
+1. **Context** — read `coverage-log.md`, SPEC 10, target game touch files
+2. **Confirm game** — single slug from argument or user prompt
+3. **Audit** — walk `mobile-game-checklist.md` for the slug
+4. **Fix** — minimal diffs in engine, player, canvas, CSS if gaps found
+5. **Verify** — lint + manual desktop/touch check on `/play/{slug}`
+6. **Persist** — update game row + append session in `coverage-log.md`, then **STOP**
+
+## Subagent
+
+For a clean context, delegate to [`.cursor/agents/mobile-porter.md`](.cursor/agents/mobile-porter.md) when the user explicitly asks for the `@mobile-porter` subagent.
+
+## Example invocations
+
+```
+@mobile-porter tetris
+@mobile-porter asteroids
+@mobile-porter audit
+```
+
+## Handoff
+
+After `@spec-impl` for a new game → `@mobile-porter {slug}` to wire touch controls.

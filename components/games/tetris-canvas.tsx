@@ -5,6 +5,7 @@ import { BLOCK, COLS, ROWS } from "@/lib/games/tetris/constants";
 import { createTetrisEngine } from "@/lib/games/tetris/engine";
 import type { TetrisEngine, TetrisGameState } from "@/lib/games/tetris/types";
 import type { GameSkinId } from "@/lib/games/skins/types";
+import { EMPTY_VIRTUAL_INPUT } from "@/lib/games/touch-controls/types";
 
 const BOARD_WIDTH = COLS * BLOCK;
 const BOARD_HEIGHT = ROWS * BLOCK;
@@ -12,6 +13,7 @@ const NEXT_SIZE = 120;
 
 interface TetrisCanvasProps {
   paused: boolean;
+  touchMode?: boolean;
   skin: GameSkinId;
   onStateChange: (state: TetrisGameState) => void;
   engineRef: React.MutableRefObject<TetrisEngine | null>;
@@ -19,6 +21,7 @@ interface TetrisCanvasProps {
 
 export function TetrisCanvas({
   paused,
+  touchMode = false,
   skin,
   onStateChange,
   engineRef,
@@ -60,6 +63,7 @@ export function TetrisCanvas({
     if (!engine) return;
 
     if (paused) {
+      engine.setVirtualInput(EMPTY_VIRTUAL_INPUT);
       engine.pause();
     } else {
       engine.resume();
@@ -73,7 +77,14 @@ export function TetrisCanvas({
   }, [skin]);
 
   return (
-    <div className="tetris-canvas-wrap">
+    <div
+      className={[
+        "tetris-canvas-wrap",
+        touchMode ? "tetris-canvas-wrap--touch" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className="tetris-arena">
         <canvas
           ref={boardRef}

@@ -14,6 +14,10 @@ import {
 } from "./constants";
 import { FRUIT_ATLAS, FRUITS_IMAGE_SRC } from "./sprites";
 import { SNAKE_SKINS } from "./skins";
+import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
 import type { SnakeEngine, SnakeGameState, SnakePhase } from "./types";
 import {
   createInitialSnake,
@@ -43,6 +47,29 @@ const GAME_KEYS = new Set([
 ]);
 
 const INITIAL_DIRECTION: Direction = { x: 1, y: 0 };
+
+function directionFromTouchAction(action: TouchAction): Direction | null {
+  switch (action) {
+    case "move_up":
+      return { x: 0, y: -1 };
+    case "move_down":
+      return { x: 0, y: 1 };
+    case "move_left":
+      return { x: -1, y: 0 };
+    case "move_right":
+      return { x: 1, y: 0 };
+    default:
+      return null;
+  }
+}
+
+function directionFromVirtualInput(state: VirtualInputState): Direction | null {
+  if (state.up) return { x: 0, y: -1 };
+  if (state.down) return { x: 0, y: 1 };
+  if (state.left) return { x: -1, y: 0 };
+  if (state.right) return { x: 1, y: 0 };
+  return null;
+}
 
 function willHitBody(head: Vec2, snake: Vec2[], growing: boolean): boolean {
   const limit = growing ? snake.length : snake.length - 1;
@@ -270,6 +297,11 @@ export function createSnakeEngine(): SnakeEngine {
     }
   }
 
+  function queueDirection(requested: Direction): void {
+    if (paused || phase === "gameover") return;
+    nextDirection = resolveDirection(direction, requested);
+  }
+
   function onKeyDown(e: KeyboardEvent): void {
     if (GAME_KEYS.has(e.key)) {
       e.preventDefault();
@@ -280,7 +312,7 @@ export function createSnakeEngine(): SnakeEngine {
     const requested = directionFromKey(e.key);
     if (!requested) return;
 
-    nextDirection = resolveDirection(direction, requested);
+    queueDirection(requested);
   }
 
   function loop(ts: number): void {
@@ -425,6 +457,18 @@ export function createSnakeEngine(): SnakeEngine {
 
     getSkin(): GameSkinId {
       return currentSkin;
+    },
+
+    setVirtualInput(state: VirtualInputState): void {
+      const requested = directionFromVirtualInput(state);
+      if (!requested) return;
+      queueDirection(requested);
+    },
+
+    pulseVirtualAction(action: TouchAction): void {
+      const requested = directionFromTouchAction(action);
+      if (!requested) return;
+      queueDirection(requested);
     },
   };
 }
