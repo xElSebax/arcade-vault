@@ -37,21 +37,36 @@ export class PowerUp {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.PI / 4);
-    if (tokens.glowBlur) {
-      ctx.shadowBlur = tokens.glowBlur;
-      ctx.shadowColor = tokens.powerUp;
-    }
     ctx.strokeStyle = tokens.powerUp;
     ctx.lineWidth = 2;
     const r = this.radius * pulse;
-    ctx.strokeRect(-r, -r, r * 2, r * 2);
+
+    const strokeDiamond = (): void => {
+      ctx.strokeRect(-r, -r, r * 2, r * 2);
+    };
+
+    if (tokens.glowBlur) {
+      ctx.shadowBlur = tokens.glowBlur;
+      ctx.shadowColor = tokens.powerUp;
+      strokeDiamond();
+      ctx.shadowBlur = 0;
+      strokeDiamond();
+    } else {
+      strokeDiamond();
+    }
+
     ctx.restore();
 
+    ctx.save();
     ctx.fillStyle = tokens.powerUp;
     ctx.font = "bold 12px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    if (tokens.glowBlur) {
+      ctx.shadowBlur = tokens.glowBlur * 0.75;
+      ctx.shadowColor = tokens.powerUp;
+    }
     ctx.fillText("3x", this.x, this.y);
-    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 }

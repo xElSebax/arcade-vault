@@ -118,12 +118,16 @@ export function createSnakeEngine(): SnakeEngine {
   function drawFruit(): void {
     if (!ctx || !fruit || !fruitsImage) return;
 
+    const skin = tokens();
     const sprite = FRUIT_ATLAS[fruit.type];
     const px = fruit.x * CELL;
     const py = fruit.y * CELL;
     const inset = 1;
 
     ctx.imageSmoothingEnabled = false;
+    if (skin.fruitFilter) {
+      ctx.filter = skin.fruitFilter;
+    }
     ctx.drawImage(
       fruitsImage,
       sprite.x,
@@ -135,6 +139,7 @@ export function createSnakeEngine(): SnakeEngine {
       CELL - inset * 2,
       CELL - inset * 2,
     );
+    ctx.filter = "none";
     ctx.imageSmoothingEnabled = true;
   }
 
@@ -166,7 +171,7 @@ export function createSnakeEngine(): SnakeEngine {
 
     ctx.fillStyle = skin.head;
     ctx.shadowColor = skin.bodyGlow;
-    ctx.shadowBlur = skin.glowBlur ?? 10;
+    ctx.shadowBlur = skin.headGlowBlur ?? skin.glowBlur ?? 10;
     ctx.fillRect(px + pad, py + pad, size, size);
     ctx.shadowBlur = 0;
 
@@ -199,6 +204,15 @@ export function createSnakeEngine(): SnakeEngine {
     }
   }
 
+  function drawScanlines(opacity: number): void {
+    if (!ctx) return;
+
+    ctx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
+    for (let y = 0; y < H; y += 2) {
+      ctx.fillRect(0, y, W, 1);
+    }
+  }
+
   function draw(): void {
     if (!ctx || !canvas) return;
 
@@ -208,6 +222,9 @@ export function createSnakeEngine(): SnakeEngine {
     drawGrid();
     drawFruit();
     drawSnake();
+    if (skin.scanlineOpacity) {
+      drawScanlines(skin.scanlineOpacity);
+    }
   }
 
   function handleGameOver(): void {

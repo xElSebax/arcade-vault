@@ -10,10 +10,10 @@
 
 | ID | Título | classic | retro | neon | Notas |
 |----|--------|---------|-------|------|-------|
-| `asteroids` | ASTEROIDS | completo | completo | completo | Primera sesión skins; infra compartida creada |
-| `tetris` | TETRIS | completo | completo | completo | Tokens COLORS+grid; classic = baseline CSS bg |
-| `arkanoid` | ARKANOID | completo | completo | completo | Sprites raw classic; retro/neon con filter draw-time |
-| `snake` | SNAKE | completo | completo | completo | Tokens body/head/grid; sprites fruta sin cambio |
+| `asteroids` | ASTEROIDS | completo | completo | completo | Refinamiento 2026-09-12: retro grid/ámbar; neon glow+grid cyan |
+| `tetris` | TETRIS | completo | completo | completo | Refinamiento 2026-09-12: retro 4 tonos fosforo, neon glow+grid |
+| `arkanoid` | ARKANOID | completo | completo | completo | Refinado: tint map por bloque, scanlines retro, glow neon fuerte |
+| `snake` | SNAKE | completo | completo | completo | Refinamiento retro/neon: ámbar CRT, cuerpo magenta neón, scanlines |
 
 ### Placeholders (8)
 
@@ -51,6 +51,13 @@ Skins obligatorios por juego: **classic** (default), **retro**, **neon**.
 **Archivos:** `lib/games/asteroids/skins.ts`, engine + entities refactorizados, `asteroids-canvas.tsx`, `asteroids-player.tsx`, `game-player-shell.tsx`, `app/arcade-vault.css`
 **Verificación:** checklist dark-mode OK — classic regresión visual, retro con paleta fosforo/ámbar y grid sutil, neon con tokens de marca y `shadowBlur` en vectores; selector persiste en `av_game_skin_asteroids`; hot-swap sin reset de score.
 
+### 2026-09-12 — asteroids (refinamiento)
+
+**Contexto:** Sesión de refinamiento visual — elevar contraste retro/neon sin tocar classic (hex baseline intacto). Doble trazo con glow en vectores neon; partículas con color de skin y glow suave.
+**Skins:** classic · retro · neon → completo
+**Archivos:** `lib/games/asteroids/skins.ts`, `engine.ts`, `entities/ship.ts`, `asteroid.ts`, `bullet.ts`, `particle.ts`, `power-up.ts`
+**Verificación:** checklist dark-mode OK — classic sin cambios visuales; retro con grid `rgba(42,42,56,0.65)` visible, asteroides ámbar `#a89858` vs nave verde, partículas ámbar; neon con grid cyan, `glowBlur: 12`, doble trazo en ship/asteroids/power-up, balas con halo, partículas cyan con glow; hot-swap y localStorage sin regresión.
+
 ### 2026-09-12 — arkanoid
 
 **Contexto:** Segunda sesión skins; reutiliza infra compartida de asteroids. Classic = sprites raw sin filter (`#000`). Retro/neon aplican `ctx.filter` en draw-time vía `spritesheet.ts`.
@@ -71,3 +78,28 @@ Skins obligatorios por juego: **classic** (default), **retro**, **neon**.
 **Skins:** classic · retro · neon → completo
 **Archivos:** `lib/games/tetris/skins.ts` (nuevo), `constants.ts`, `utils.ts`, `engine.ts`, `types.ts`, `tetris-canvas.tsx`, `tetris-player.tsx`
 **Verificación:** checklist dark-mode OK — classic regresión visual idéntica al baseline; retro con paleta fosforo/ámbar limitada y grid `#1a1a22`; neon con tokens de marca (`#00f5ff`, `#f5ff00`, `#ff006e`, `#00ff88`) y `glowBlur: 6` en bloques; piezas distinguibles en los tres skins; selector persiste en `av_game_skin_tetris`; hot-swap sin reset de score.
+
+### 2026-09-12 — arkanoid (refinamiento)
+
+**Contexto:** Sesión de refinamiento — retro/neon demasiado sutiles (solo `ctx.filter` genérico + glow mínimo en paddle/bola). Classic sin cambios (sprites raw).
+**Skins:** classic · retro · neon → completo (refinados)
+**Archivos:** `lib/games/arkanoid/skins.ts`, `lib/games/arkanoid/engine.ts`
+**Verificación:** checklist dark-mode OK — classic idéntico al baseline; retro con tint map fosforo por `BlockColor` (ámbar/verde/muted), grid `#2a2838` más visible (`gridAlpha: 0.52`), scanlines CRT (`scanlineAlpha: 0.14`); neon con tint map de marca por bloque, paddle glow cyan `14px`, bola amarilla `18px`, explosiones con glow `10px` por color; sin impacto en gameplay/hitboxes; selector persiste en `av_game_skin_arkanoid`.
+
+### 2026-09-12 — snake (refinamiento)
+
+**Contexto:** Refinamiento visual retro/neon — usuario reportó que ambos se sentían demasiado parecidos al verde classic (`#00ff88`). Classic sin cambios (baseline exacto).
+**Skins:** classic · retro · neon → completo (refinados retro/neon)
+**Archivos:** `lib/games/snake/skins.ts`, `lib/games/snake/engine.ts`
+**Cambios retro:** cabeza/contorno ámbar fosforo (`#ffb000` / `#ffdd66`), cuerpo verde apagado (`#3a6b44`), grid ámbar más visible, scanlines CRT (`scanlineOpacity: 0.12`), tint cálido en frutas vía `fruitFilter`.
+**Cambios neon:** cuerpo magenta (`#ff006e`) distinto del classic, cabeza cyan (`#00f5ff`), contorno amarillo (`#f5ff00`), `glowBlur: 12` en segmentos y `headGlowBlur: 16`, frutas con saturación alta.
+**Verificación:** checklist dark-mode OK — classic regresión visual intacta; retro legible con contraste ámbar/verde muted; neon distinguible por paleta cyan/magenta/amarillo sin verde classic en cuerpo; frutas distinguibles del fondo en los tres skins; selector persiste en `av_game_skin_snake`; hot-swap sin reset de score.
+
+### 2026-09-12 — tetris (refinamiento)
+
+**Contexto:** Usuario pidió retro/neon más notorios e identidad propia vs classic/asteroids. Classic sin cambios (CLASSIC_COLORS, grid `#22222e`, bg null).
+**Skins:** classic · retro · neon → completo
+**Cambios retro:** 4 tonos fosforo dominantes (verde `#33ff66`, ámbar `#ffb000`, muted `#8a8a70`, highlight `#ccffaa`); grid verde fosforo visible `rgba(51,255,102,0.14)`; ghost tenue `0.1`; `blockShadow` en drawBlock (sin glow).
+**Cambios neon:** colores marca más contrastados (Z rojo `#ff2244`, J azul `#0099ff`, L naranja `#ff8800`); grid cyan `rgba(0,245,255,0.22)`; `glowBlur: 14` + doble pass + `blockStroke`; ghost `0.2`.
+**Archivos:** `lib/games/tetris/skins.ts`, `utils.ts` (drawBlock), `engine.ts` (gridLineWidth)
+**Verificación:** checklist dark-mode OK — classic regresión intacta; retro lectura CRT fosforo clara; neon glow y grid cyan visibles; piezas distinguibles por forma+color en los tres skins; selector y hot-swap sin cambios.

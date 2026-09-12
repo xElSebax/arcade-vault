@@ -67,20 +67,37 @@ export function drawBlock(
   const py = y * size + 1;
   const blockSize = size - 2;
 
+  const isGhost = alpha !== undefined;
   ctx.globalAlpha = alpha ?? 1;
 
-  if (tokens.glowBlur && alpha === undefined) {
+  if (tokens.glowBlur && !isGhost) {
     ctx.shadowColor = color;
     ctx.shadowBlur = tokens.glowBlur;
+    ctx.fillStyle = color;
+    ctx.fillRect(px, py, blockSize, blockSize);
   }
-
-  ctx.fillStyle = color;
-  ctx.fillRect(px, py, blockSize, blockSize);
 
   ctx.shadowBlur = 0;
   ctx.shadowColor = "transparent";
 
-  ctx.fillStyle = tokens.blockHighlight;
-  ctx.fillRect(px, py, blockSize, 4);
+  ctx.fillStyle = color;
+  ctx.fillRect(px, py, blockSize, blockSize);
+
+  if (tokens.blockShadow && !isGhost) {
+    ctx.fillStyle = tokens.blockShadow;
+    ctx.fillRect(px, py + blockSize - 2, blockSize, 2);
+  }
+
+  if (!isGhost) {
+    ctx.fillStyle = tokens.blockHighlight;
+    ctx.fillRect(px, py, blockSize, 4);
+
+    if (tokens.blockStroke) {
+      ctx.strokeStyle = tokens.blockStroke;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 0.5, py + 0.5, blockSize - 1, blockSize - 1);
+    }
+  }
+
   ctx.globalAlpha = 1;
 }

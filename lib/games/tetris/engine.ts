@@ -71,8 +71,9 @@ export function createTetrisEngine(): TetrisEngine {
   }
 
   function drawGrid(context: CanvasRenderingContext2D): void {
-    context.strokeStyle = tokens().grid;
-    context.lineWidth = 0.5;
+    const skin = tokens();
+    context.strokeStyle = skin.grid;
+    context.lineWidth = skin.gridLineWidth ?? 0.5;
     for (let c = 1; c < COLS; c++) {
       context.beginPath();
       context.moveTo(c * BLOCK, 0);

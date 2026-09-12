@@ -265,10 +265,16 @@ export function createAsteroidsEngine(): AsteroidsEngine {
     ctx.restore();
   }
 
-  function drawGrid(context: CanvasRenderingContext2D, gridColor: string): void {
+  function drawGrid(
+    context: CanvasRenderingContext2D,
+    skinTokens: ReturnType<typeof tokens>,
+  ): void {
+    if (!skinTokens.grid) return;
+
     const step = 40;
-    context.strokeStyle = gridColor;
-    context.lineWidth = 1;
+    context.save();
+    context.strokeStyle = skinTokens.grid;
+    context.lineWidth = skinTokens.gridLineWidth ?? 1;
     for (let x = 0; x <= W; x += step) {
       context.beginPath();
       context.moveTo(x, 0);
@@ -281,6 +287,7 @@ export function createAsteroidsEngine(): AsteroidsEngine {
       context.lineTo(W, y);
       context.stroke();
     }
+    context.restore();
   }
 
   function drawHUD(skinTokens: ReturnType<typeof tokens>): void {
@@ -314,9 +321,7 @@ export function createAsteroidsEngine(): AsteroidsEngine {
     context.fillStyle = skinTokens.background;
     context.fillRect(0, 0, W, H);
 
-    if (skinTokens.grid) {
-      drawGrid(context, skinTokens.grid);
-    }
+    drawGrid(context, skinTokens);
 
     particles.forEach((p) => p.draw(context, skinTokens));
     asteroids.forEach((a) => a.draw(context, skinTokens));

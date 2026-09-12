@@ -3,6 +3,8 @@ import type { GameSkinId } from "@/lib/games/skins/types";
 export interface AsteroidsSkinTokens {
   background: string;
   grid?: string;
+  /** Grid line width; defaults to 1 in engine. */
+  gridLineWidth?: number;
   ship: string;
   shipThrust: string;
   asteroid: string;
@@ -13,6 +15,8 @@ export interface AsteroidsSkinTokens {
   hudTripleShot: string;
   lifeIcon: string;
   glowBlur?: number;
+  /** Softer glow for dense particles; defaults to half of glowBlur. */
+  particleGlowBlur?: number;
 }
 
 export const ASTEROIDS_SKINS: Record<GameSkinId, AsteroidsSkinTokens> = {
@@ -30,21 +34,24 @@ export const ASTEROIDS_SKINS: Record<GameSkinId, AsteroidsSkinTokens> = {
   },
   retro: {
     background: "#050508",
-    grid: "#1a1a22",
+    grid: "rgba(42, 42, 56, 0.65)",
+    gridLineWidth: 0.5,
     ship: "#33ff66",
-    shipThrust: "rgba(255, 176, 0, 0.85)",
-    asteroid: "#8a8a70",
-    bullet: "#ccffaa",
+    shipThrust: "rgba(255, 176, 0, 0.9)",
+    asteroid: "#a89858",
+    bullet: "#e6ffb8",
     powerUp: "#ffb000",
-    particleRgb: [51, 255, 102],
+    particleRgb: [255, 176, 0],
     hud: "#ccffaa",
     hudTripleShot: "#ffb000",
     lifeIcon: "#33ff66",
   },
   neon: {
     background: "#000",
+    grid: "rgba(0, 245, 255, 0.1)",
+    gridLineWidth: 0.5,
     ship: "#00f5ff",
-    shipThrust: "rgba(255, 0, 110, 0.9)",
+    shipThrust: "rgba(255, 0, 110, 0.95)",
     asteroid: "#00ff88",
     bullet: "#f5ff00",
     powerUp: "#ff006e",
@@ -52,6 +59,7 @@ export const ASTEROIDS_SKINS: Record<GameSkinId, AsteroidsSkinTokens> = {
     hud: "#00f5ff",
     hudTripleShot: "#f5ff00",
     lifeIcon: "#00f5ff",
-    glowBlur: 8,
+    glowBlur: 12,
+    particleGlowBlur: 5,
   },
 };

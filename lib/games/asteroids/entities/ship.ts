@@ -102,29 +102,40 @@ export class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    if (tokens.glowBlur) {
-      ctx.shadowBlur = tokens.glowBlur;
-      ctx.shadowColor = tokens.ship;
-    }
     ctx.strokeStyle = tokens.ship;
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
 
-    ctx.beginPath();
-    ctx.moveTo(20, 0);
-    ctx.lineTo(-12, -9);
-    ctx.lineTo(-7, 0);
-    ctx.lineTo(-12, 9);
-    ctx.closePath();
-    ctx.stroke();
+    const strokeShip = (): void => {
+      ctx.beginPath();
+      ctx.moveTo(20, 0);
+      ctx.lineTo(-12, -9);
+      ctx.lineTo(-7, 0);
+      ctx.lineTo(-12, 9);
+      ctx.closePath();
+      ctx.stroke();
+    };
+
+    if (tokens.glowBlur) {
+      ctx.shadowBlur = tokens.glowBlur;
+      ctx.shadowColor = tokens.ship;
+      strokeShip();
+      ctx.shadowBlur = 0;
+      strokeShip();
+    } else {
+      strokeShip();
+    }
 
     if (this.thrusting && Math.random() > 0.35) {
-      ctx.shadowColor = tokens.shipThrust;
+      ctx.strokeStyle = tokens.shipThrust;
       ctx.beginPath();
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      ctx.strokeStyle = tokens.shipThrust;
+      if (tokens.glowBlur) {
+        ctx.shadowBlur = tokens.glowBlur * 0.6;
+        ctx.shadowColor = tokens.shipThrust;
+      }
       ctx.stroke();
     }
 

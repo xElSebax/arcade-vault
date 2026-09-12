@@ -32,11 +32,24 @@ export class Particle {
   draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
     const alpha = this.ttl / this.life;
     const [r, g, b] = tokens.particleRgb;
-    ctx.strokeStyle = `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+    const color = `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+
+    ctx.save();
+    ctx.strokeStyle = color;
     ctx.lineWidth = 1;
+
+    const particleGlow =
+      tokens.particleGlowBlur ??
+      (tokens.glowBlur ? Math.round(tokens.glowBlur * 0.5) : 0);
+    if (particleGlow > 0) {
+      ctx.shadowBlur = particleGlow;
+      ctx.shadowColor = color;
+    }
+
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);
     ctx.lineTo(this.x - this.vx * 0.05, this.y - this.vy * 0.05);
     ctx.stroke();
+    ctx.restore();
   }
 }

@@ -8,7 +8,14 @@ export interface SnakeSkinTokens {
   head: string;
   headOutline: string;
   eyeColor: string;
+  /** Glow on body segments; classic default 5. */
   glowBlur?: number;
+  /** Glow on head; falls back to glowBlur then 10. */
+  headGlowBlur?: number;
+  /** CSS filter on fruit sprites; classic = none. */
+  fruitFilter?: string;
+  /** CRT scanline overlay opacity (0–1); retro only. */
+  scanlineOpacity?: number;
 }
 
 export const SNAKE_SKINS: Record<GameSkinId, SnakeSkinTokens> = {
@@ -23,21 +30,26 @@ export const SNAKE_SKINS: Record<GameSkinId, SnakeSkinTokens> = {
   },
   retro: {
     background: "#050508",
-    grid: "rgba(26, 26, 34, 0.85)",
-    body: "#33ff66",
-    bodyGlow: "rgba(51, 255, 102, 0.35)",
-    head: "#ccffaa",
-    headOutline: "#ffb000",
-    eyeColor: "#050508",
+    grid: "rgba(255, 176, 0, 0.18)",
+    body: "#3a6b44",
+    bodyGlow: "rgba(58, 107, 68, 0.2)",
+    head: "#ffb000",
+    headOutline: "#ffdd66",
+    eyeColor: "#1a1008",
+    glowBlur: 2,
+    fruitFilter: "sepia(0.35) saturate(0.8) hue-rotate(10deg) brightness(0.88)",
+    scanlineOpacity: 0.12,
   },
   neon: {
     background: "#000",
-    grid: "rgba(0, 245, 255, 0.08)",
-    body: "#00ff88",
-    bodyGlow: "rgba(0, 245, 255, 0.6)",
+    grid: "rgba(0, 245, 255, 0.1)",
+    body: "#ff006e",
+    bodyGlow: "rgba(255, 0, 110, 0.75)",
     head: "#00f5ff",
     headOutline: "#f5ff00",
     eyeColor: "#000",
-    glowBlur: 8,
+    glowBlur: 12,
+    headGlowBlur: 16,
+    fruitFilter: "saturate(1.6) brightness(1.08) contrast(1.05)",
   },
 };

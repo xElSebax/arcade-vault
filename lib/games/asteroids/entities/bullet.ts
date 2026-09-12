@@ -32,14 +32,21 @@ export class Bullet {
   }
 
   draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
+    ctx.save();
+    ctx.fillStyle = tokens.bullet;
+
     if (tokens.glowBlur) {
       ctx.shadowBlur = tokens.glowBlur;
       ctx.shadowColor = tokens.bullet;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius + 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
     }
-    ctx.fillStyle = tokens.bullet;
+
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 }
