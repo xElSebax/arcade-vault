@@ -118,6 +118,26 @@ Evalúa qué juegos retro canvas encajan en Arcade Vault **antes** de escribir u
 
 **Estados en el log:** `sugerido` · `descartado` · `en_spec` · `implementado` · `revisitado`
 
+## Agente `@skin-designer`
+
+Configura los tres skins visuales (**classic**, **retro**, **neon**) para **un juego jugable a la vez**. Mantiene el inventario en `references/skin-designer/game-with-themes.md`.
+
+| Aspecto | Detalle |
+|---------|---------|
+| Invocación | `@skin-designer` o `/skin-designer` · argumento: slug del juego (`asteroids`, `tetris`, `arkanoid`, `snake`) |
+| Subagente (contexto limpio) | [`.cursor/agents/skin-designer.md`](.cursor/agents/skin-designer.md) — delegar cuando el usuario pida explícitamente el agente `@skin-designer` |
+| Skill | [`.claude/skills/skin-designer/SKILL.md`](.claude/skills/skin-designer/SKILL.md) |
+| Paletas | [`.claude/skills/skin-designer/palette-guide.md`](.claude/skills/skin-designer/palette-guide.md) |
+| Checklist dark mode | [`.claude/skills/skin-designer/dark-mode-checklist.md`](.claude/skills/skin-designer/dark-mode-checklist.md) |
+| Memoria | [`references/skin-designer/game-with-themes.md`](references/skin-designer/game-with-themes.md) — inventario versionado en git |
+| Regla Cursor | [`.cursor/rules/skin-designer.mdc`](.cursor/rules/skin-designer.mdc) |
+
+**Qué hace:** lee el inventario, confirma un solo juego por sesión, define tokens en `lib/games/{slug}/skins.ts`, implementa classic/retro/neon en el engine y wiring React, verifica contraste en fondo oscuro del CRT, actualiza la fila del juego en `game-with-themes.md`.
+
+**Qué no hace:** no aplica skins a todos los jugables de golpe; no marca specs como `Aprobado`; no toca placeholders salvo petición explícita.
+
+**Estados por skin en el inventario:** `pendiente` · `en_progreso` · `completo`
+
 ## Skills
 
 Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar con `/` en Claude Code o `@` en Cursor.
@@ -127,6 +147,7 @@ Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar 
 | `/frontend-design` | Diseñar la interfaz de usuario (estética retro CRT, tokens en `app/arcade-vault.css`). |
 | `@game-planner` | Evaluar qué juego retro encaja en la plataforma; mantener memoria en `references/game-planner/suggestions-log.md`. **No escribe specs** — handoff a `@add-game`. |
 | `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/`. **No implementa código** — promover variante elegida a `specs/NN-{slug}.md` antes de `@spec-impl`. |
+| `@skin-designer` | Aplicar skins classic/retro/neon a **un juego a la vez**; memoria en `references/skin-designer/game-with-themes.md`. |
 | `@spec` | Diseñar un spec genérico antes de escribir código. |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard). **Extiende `@spec`** — lee primero `/spec`, luego aplica patrones de SPEC 05 y SPEC 06. **No implementa código** — solo produce `specs/NN-slug.md` en `Borrador`. |
 | `@spec-impl` | Implementar un spec en estado `Aprobado`. |
@@ -172,11 +193,12 @@ references/
   implemented-games.md    # Inventario de juegos (jugables + placeholders)
   game-planner/           # Memoria de sugerencias (@game-planner)
   game-jam/               # Memoria de sesiones jam (@game-jam)
+  skin-designer/          # Inventario de skins por juego (@skin-designer)
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
   source-assets/          # Assets fuente
-.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, @game-planner, @game-jam, nextjs)
-.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, game-planner, game-jam, frontend-design)
+.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, @game-planner, @game-jam, @skin-designer, nextjs)
+.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, game-planner, game-jam, skin-designer, frontend-design)
 ```
 
 Alias de importación: `@/*` apunta a la raíz del proyecto.
@@ -300,6 +322,7 @@ Invocar con `@` en el chat:
 |-------|-----|
 | `@game-planner` | Evaluar qué juego retro encaja; memoria en `references/game-planner/suggestions-log.md` |
 | `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/` |
+| `@skin-designer` | Skins classic/retro/neon por juego; inventario en `references/skin-designer/game-with-themes.md` |
 | `@spec` | Diseñar un spec antes de escribir código |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard) |
 | `@spec-impl` | Implementar un spec aprobado |
