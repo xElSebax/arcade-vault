@@ -268,6 +268,7 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 | 07 | Juego Tetris | Implementado |
 | 08 | Juego Arkanoid | Implementado |
 | 09 | Juego Snake | Implementado |
+| 10 | Controles táctiles móvil | Implementado |
 
 ### Ciclo de trabajo
 

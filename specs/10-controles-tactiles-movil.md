@@ -4,7 +4,7 @@
 > **Progreso:** Pasos 1–12 completados.
 > **Depende de:** SPEC 05 — Juego Asteroids, SPEC 06 — Catálogo y leaderboard en Supabase, SPEC 07 — Juego Tetris, SPEC 08 — Juego Arkanoid, SPEC 09 — Juego Snake
 > **Fecha:** 2026-09-12
-> **Última revisión:** 2026-09-12 — afinación de layout táctil (D-pad | gap | A/B, chrome oculto, scroll contenido, game over compacto)
+> **Última revisión:** 2026-09-12 — modelo tap + hold final, repeat alineado a teclado, overlays/scroll, layout Tetris móvil
 > **Objetivo:** Permitir jugar los cuatro juegos reales en dispositivos táctiles mediante una barra inferior fija con controles virtuales unificados (↑↓←→ + A/B), sin romper el teclado en desktop.
 
 ## Alcance
@@ -27,7 +27,7 @@
 - HUD superior en móvil: solo stats de lectura (jugador, puntuación, vidas/nivel/longitud/líneas según juego), con margen inferior respecto al CRT (~14px).
 - Player en modo táctil ocupa `100dvh` en flex; barra inferior del CRT (`SEÑAL OK`, etc.) oculta.
 - Teclado en desktop sin cambios: los controles virtuales no se muestran fuera del modo táctil.
-- Mantener pulsado más de ~500 ms = repetición continua a ritmo de teclado Windows/Chrome (~33 ms). Un tap corto = **un solo paso**.
+- **Modelo dual tap + hold** (ver sección dedicada): tap corto = un paso vía `pulseVirtualAction`; mantener > ~500 ms activa `setVirtualInput` y repetición continua (Tetris ~33 ms/celda; Arkanoid/Asteroids como teclado).
 - Durante pausa o game over: ocultar controles de juego; la barra inferior muestra solo acciones del shell (REANUDAR, FIN, SALIR, skins).
 - Bloqueo de scroll del **documento** durante modo táctil (`overflow: hidden` en `html`/`body` vía `av-touch-play`). `touch-action: none` en partida activa.
 - Game over / pausa: el scroll, si hace falta, ocurre **dentro del overlay del CRT** (`overscroll-behavior: contain`), no en la página — evita que el fondo (grid de dots) se despegue del viewport.
@@ -90,9 +90,9 @@ export type TouchAction =
   | "rotate_left"
   | "rotate_right"
   | "fire"
-  | "rotate" // Tetris: rotar pieza (pulso)
-  | "soft_drop" // Tetris: bajar suave (mantener)
-  | "hard_drop"; // Tetris: caída dura (pulso)
+  | "rotate" // Tetris: rotar pieza (solo pulso; no hold)
+  | "soft_drop" // Tetris: bajar suave (pulso + hold)
+  | "hard_drop"; // Tetris: caída dura (solo pulso)
 
 /** null = botón visible pero atenuado (sin acción) */
 export type GameTouchMap = Record<VirtualButton, TouchAction | null>;
@@ -150,35 +150,67 @@ export const TOUCH_MAPS: Record<
 Cada engine expone dos métodos nuevos (sin romper la API existente):
 
 ```ts
-/** Botones mantenidos (thrust, mover pala, soft drop, direcciones Snake) */
+/** Estado de botones mantenidos tras el delay de hold (~500 ms) */
 setVirtualInput(state: VirtualInputState): void;
 
-/** Acciones de un solo toque (disparo, rotar, hard drop) */
+/** Un paso discreto en pointerdown (tap) */
 pulseVirtualAction(action: TouchAction): void;
 ```
 
-Implementación interna: traducir a la misma lógica que hoy consumen `keydown` / `keys` / `ship.input`, sin emitir `KeyboardEvent` sintéticos.
+Implementación interna: traducir a la misma lógica que hoy consumen `keydown` / `keys` / `ship.input`, sin emitir `KeyboardEvent` sintéticos. Los `{slug}-canvas.tsx` llaman `setVirtualInput(EMPTY_VIRTUAL_INPUT)` al pausar.
 
-| Engine      | `setVirtualInput` (hold tras delay)  | `pulseVirtualAction` (tap)                          |
-| ----------- | ------------------------------------ | --------------------------------------------------- |
-| `snake`     | reafirma dirección si se mantiene    | `move_*` encola un giro                             |
-| `asteroids` | rotación / thrust continuo           | `rotate_*` un ángulo, `thrust` impulso, `fire`      |
-| `tetris`    | ARR ←→↓                              | `move_*`, `soft_drop`, `rotate`, `hard_drop`        |
-| `arkanoid`  | pala continua                        | `move_*` nudge de 32 px                             |
+| Engine      | `setVirtualInput` (hold ≥ ~500 ms)     | `pulseVirtualAction` (tap en pointerdown)           |
+| ----------- | -------------------------------------- | --------------------------------------------------- |
+| `snake`     | reafirma dirección mantenida           | `move_*` → `queueDirection` (1 giro)                |
+| `asteroids` | `keys` ←→↑ → rotación / thrust continuo | `rotate_*` ±π/12, `thrust` impulso 42 px, `fire`    |
+| `tetris`    | guarda hold; loop repite ←→↓ cada 33 ms | `move_*`, `soft_drop`, `rotate`, `hard_drop` (1 paso) |
+| `arkanoid`  | `keys` ←→ → pala continua (400 px/s)   | `move_*` → `PADDLE_STEP` (32 px)                    |
+
+**Acciones solo-pulso** (nunca entran en hold): `fire`, `rotate`, `hard_drop` — definidas en `PULSE_ACTIONS` dentro de `VirtualGameControls`.
+
+### Modelo de input táctil (tap + hold)
+
+Flujo en `VirtualGameControls` al `pointerdown` de un botón con acción en el mapa:
+
+1. **Siempre** → `onActionPulse(action)` (debounce 90 ms por botón) = **un paso discreto**.
+2. Si la acción **no** es solo-pulso → iniciar timer de **500 ms**; al vencer, `holdState[button] = true` y `onInputChange(holdState)`.
+3. Al soltar (`pointerup` / `pointercancel` / `touchend` global en capture) → limpiar hold y emitir estado vacío si cambió.
+
+Constantes de referencia (implementación actual):
+
+| Constante | Valor | Ubicación |
+|-----------|-------|-----------|
+| `HOLD_REPEAT_DELAY_MS` | 500 | `virtual-game-controls.tsx` |
+| `PULSE_DEBOUNCE_MS` | 90 | `virtual-game-controls.tsx` |
+| `MOUSE_AFTER_TOUCH_SUPPRESS_MS` | 1200 | `virtual-game-controls.tsx` |
+| `VIRTUAL_INPUT_REPEAT_MS` | 33 | `lib/games/tetris/engine.ts` (`dt` del loop en **ms**) |
+| `PADDLE_STEP` | 32 px | `lib/games/arkanoid/constants.ts` |
+| `TAP_ROTATE` | π/12 rad | `lib/games/asteroids/engine.ts` |
+| `TAP_THRUST` | 42 px/s equiv. | `lib/games/asteroids/engine.ts` |
+
+**Eventos y robustez móvil:**
+
+- **No** usar `setPointerCapture` ni `preventDefault` en `pointerdown`.
+- Ignorar `pointerType: "mouse"` sintético durante 1.2 s tras un toque real (evita doble input).
+- Liberación en `window` (`pointerup`, `pointercancel`, `touchend`, `touchcancel`) en fase capture.
+- Estilo pressed solo con clase `--pressed` (sin `:active` ni `transform`).
+- `touch-action: none` en botones y contenedor de controles.
+
+**Montaje:** en cada `{slug}-player.tsx`, `VirtualGameControls` solo se renderiza con `touchMode && !paused && !over` (no se monta en overlay; el prop `disabled` del componente queda como respaldo interno).
 
 ### Componente de UI — `components/virtual-game-controls.tsx`
 
 ```ts
 interface VirtualGameControlsProps {
   map: GameTouchMap;
-  disabled?: boolean; // true en pausa / game over
+  disabled?: boolean; // respaldo; en producción los players desmontan el componente en pausa/over
   onInputChange: (state: VirtualInputState) => void;
   onActionPulse: (action: TouchAction) => void;
   controlsLabel?: string; // ej. game.title → "Controles de SNAKE"
 }
 ```
 
-Sin estado persistente de juego propio: emite `onInputChange` en `pointerdown` / `pointerup` / `pointerleave` / `pointercancel`, y `onActionPulse` en acciones de pulso (A/B cuando el mapa apunta a acción de pulso; ↑ en Tetris para rotar).
+Sin estado de juego propio: traduce toques a `onActionPulse` (tap) y `onInputChange` (hold). No emite `KeyboardEvent`.
 
 **Layout visual (referencia canónica):**
 
@@ -230,19 +262,19 @@ No se introducen tablas Supabase, `localStorage` ni cambios en el catálogo de j
 
 1. **Infraestructura de touch controls** ✅ — `types.ts`, `maps.ts`, `detect-touch-mode.ts`, `useTouchPlayMode`, `EMPTY_VIRTUAL_INPUT`.
 
-2. **Componente `VirtualGameControls`** ✅ — Layout D-pad izquierda + A/B derecha; flechas rotadas; pulsos vs mantener; `controlsLabel` opcional.
+2. **Componente `VirtualGameControls`** ✅ — Layout D-pad + A/B; modelo tap + hold (500 ms DAS); debounce pulso; supresión mouse fantasma; liberación global; `controlsLabel` opcional.
 
 3. **Estilos de barra táctil** ✅ — En `arcade-vault.css`: `.av-touch-play`, `.av-touch-bar`, `.virtual-controls`, `.skin-selector-compact`, HUD/CRT/game over táctil, tokens `--virtual-btn-size` / `--touch-bar-height`.
 
 4. **Extender `GamePlayerShell`** ✅ — Props `touchMode` / `touchControls`; `useTouchPlayChrome`; toolbar de una fila; desktop sin cambios.
 
-5. **Engine Snake** ✅ — `setVirtualInput` / `pulseVirtualAction`; cableado en `snake-player.tsx` + limpieza en `snake-canvas.tsx` al pausar.
+5. **Engine Snake** ✅ — `pulseVirtualAction` encola dirección (tap); `setVirtualInput` reafirma en hold; cableado en `snake-player.tsx` + limpieza en `snake-canvas.tsx`.
 
-6. **Engine Arkanoid** ✅ — `setVirtualInput` mapea `left`/`right` a `keys.ArrowLeft`/`ArrowRight`; `pulseVirtualAction` no-op; cableado en `arkanoid-player.tsx` + limpieza en `arkanoid-canvas.tsx` al pausar.
+6. **Engine Arkanoid** ✅ — `setVirtualInput` → `keys` (pala continua); `pulseVirtualAction` → `PADDLE_STEP` (32 px); cableado en `arkanoid-player.tsx` + limpieza en `arkanoid-canvas.tsx`.
 
-7. **Engine Asteroids** ✅ — `setVirtualInput` mapea `left`/`right`/`up` a `keys.ArrowLeft`/`ArrowRight`/`ArrowUp`; `pulseVirtualAction("fire")` marca `justPressed.Space`; cableado en `asteroids-player.tsx` + limpieza en `asteroids-canvas.tsx`.
+7. **Engine Asteroids** ✅ — `setVirtualInput` → `keys` (rotación/thrust continuo); `pulseVirtualAction` → ángulo/impulso/disparo; cableado en `asteroids-player.tsx` + limpieza en `asteroids-canvas.tsx`.
 
-8. **Engine Tetris** ✅ — `setVirtualInput` con borde en press + repetición ~50ms en loop para ←→ y ↓ soft drop; `pulseVirtualAction` para `rotate` y `hard_drop`; cableado en `tetris-player.tsx` + limpieza en `tetris-canvas.tsx`.
+8. **Engine Tetris** ✅ — `pulseVirtualAction` = un paso (mover, soft drop, rotar, hard drop); `setVirtualInput` = hold; `processVirtualHoldInput` repite cada 33 ms (`dt` en ms); cableado en `tetris-player.tsx` + limpieza en `tetris-canvas.tsx`.
 
 9. **Layout Tetris móvil** ✅ — `tetris-canvas-wrap--touch`; CRT sin `aspect-ratio` 4:3 (`:has(.tetris-canvas-wrap--touch)`); tablero `height: 100%` + `aspect-ratio: 10/20`; NEXT ~64px a la derecha; `.tetris-controls` oculto.
 
@@ -256,56 +288,62 @@ No se introducen tablas Supabase, `localStorage` ni cambios en el catálogo de j
 
 ### Detección y layout general
 
-- [ ] En viewport ≥ 768px con `pointer: fine` (desktop), los controles virtuales **no** se muestran.
-- [ ] En viewport < 768px o `pointer: coarse`, la barra inferior fija se muestra en `/play/asteroids`, `/play/tetris`, `/play/arkanoid` y `/play/snake`.
-- [ ] En modo táctil, **navbar y footer del sitio están ocultos** en la vista de juego.
-- [ ] El HUD superior en modo táctil muestra solo stats (jugador, puntuación, vidas/nivel/etc.); no muestra PAUSA, FIN ni SALIR.
-- [ ] Hay separación visible entre el HUD de stats y el marco CRT (~14px).
-- [ ] PAUSA, FIN, SALIR y selector de skins son accesibles desde la **toolbar** de la barra inferior, en una sola fila, sin scroll hacia arriba.
-- [ ] La barra de controles permanece fija al borde inferior del viewport durante la partida.
+- [x] En viewport ≥ 768px con `pointer: fine` (desktop), los controles virtuales **no** se muestran.
+- [x] En viewport < 768px o `pointer: coarse`, la barra inferior fija se muestra en `/play/asteroids`, `/play/tetris`, `/play/arkanoid` y `/play/snake`.
+- [x] En modo táctil, **navbar y footer del sitio están ocultos** en la vista de juego.
+- [x] El HUD superior en modo táctil muestra solo stats (jugador, puntuación, vidas/nivel/etc.); no muestra PAUSA, FIN ni SALIR.
+- [x] Hay separación visible entre el HUD de stats y el marco CRT (~14px).
+- [x] PAUSA, FIN, SALIR y selector de skins son accesibles desde la **toolbar** de la barra inferior, en una sola fila, sin scroll hacia arriba.
+- [x] La barra de controles permanece fija al borde inferior del viewport durante la partida.
 
 ### Controles unificados
 
-- [ ] Los 6 botones (↑ ↓ ← → A B) aparecen en la misma disposición en los cuatro juegos: **D-pad a la izquierda, A y B juntos a la derecha**.
-- [ ] Hay separación amplia entre el grupo D-pad y el grupo A/B (~64px); los botones **dentro** de cada grupo permanecen compactos (4px / 8px).
-- [ ] Las cuatro flechas usan el mismo icono rotado (sin `←` `→` deformados).
-- [ ] Los botones sin acción en el mapa del juego se muestran atenuados y no responden al toque.
-- [ ] Los botones con acción responden visualmente al toque (estado activo mientras el dedo está apoyado).
+- [x] Los 6 botones (↑ ↓ ← → A B) aparecen en la misma disposición en los cuatro juegos: **D-pad a la izquierda, A y B juntos a la derecha**.
+- [x] Hay separación amplia entre el grupo D-pad y el grupo A/B (~64px); los botones **dentro** de cada grupo permanecen compactos (4px / 8px).
+- [x] Las cuatro flechas usan el mismo icono rotado (sin `←` `→` deformados).
+- [x] Los botones sin acción en el mapa del juego se muestran atenuados y no responden al toque.
+- [x] Los botones con acción responden visualmente al toque (estado activo mientras el dedo está apoyado).
+
+### Input táctil (tap + hold)
+
+- [x] Un tap corto produce **exactamente un paso** (celda, nudge de pala, giro/impulso, rotar, disparar, etc.).
+- [x] Mantener ≥ ~500 ms activa repetición continua comparable al teclado (Tetris: 33 ms/celda en hold).
+- [x] No hay doble input por mouse sintético post-toque ni botones “pegados” tras soltar.
 
 ### Por juego
 
-- [ ] **Snake:** ↑↓←→ cambian la dirección; A y B no hacen nada.
-- [ ] **Asteroids:** ↑ impulsa, ←→ rotan, A dispara; ↓ y B no hacen nada.
-- [ ] **Tetris:** ←→ mueven, ↑ rota, ↓ baja suave (mantener), A hace hard drop; B no hace nada.
-- [ ] **Arkanoid:** ←→ mueven la pala; ↑ ↓ A B no hacen nada; la pelota sigue auto-lanzándose.
+- [x] **Snake:** ↑↓←→ cambian la dirección (tap y hold); A y B no hacen nada.
+- [x] **Asteroids:** ↑ impulsa, ←→ rotan, A dispara; ↓ y B no hacen nada.
+- [x] **Tetris:** ←→ mueven (tap + hold), ↑ rota (solo tap), ↓ baja suave (tap + hold), A hard drop (solo tap); B no hace nada.
+- [x] **Arkanoid:** ←→ mueven la pala (tap 32 px + hold continuo); ↑ ↓ A B no hacen nada; la pelota sigue auto-lanzándose.
 
 ### Desktop sin regresiones
 
-- [ ] En desktop, los cuatro juegos siguen funcionando con teclado exactamente como antes.
-- [ ] No se emiten `KeyboardEvent` sintéticos desde los controles táctiles.
+- [x] En desktop, los cuatro juegos siguen funcionando con teclado exactamente como antes.
+- [x] No se emiten `KeyboardEvent` sintéticos desde los controles táctiles.
 
 ### Overlays y scroll
 
-- [ ] En pausa, los botones de juego (↑↓←→ A B) están ocultos; solo toolbar del shell visible.
-- [ ] En game over, igual: sin controles de juego; panel compacto dentro del CRT; si hay overflow, scroll **dentro del overlay**, no en el documento.
-- [ ] El fondo del sitio (grid/dots) no se despega del viewport al interactuar con game over en modo táctil.
-- [ ] Durante partida activa, scroll/zoom accidental del navegador está bloqueado (`av-touch-play` + `touch-action: none`).
-- [ ] Input de iniciales en game over táctil tiene altura fija (~34px), no se estira por flex.
+- [x] En pausa, los botones de juego (↑↓←→ A B) no están montados; solo toolbar del shell visible.
+- [x] En game over, igual: sin controles de juego; panel compacto dentro del CRT; si hay overflow, scroll **dentro del overlay**, no en el documento.
+- [x] El fondo del sitio (grid/dots) no se despega del viewport al interactuar con game over en modo táctil.
+- [x] Durante partida activa, scroll/zoom accidental del navegador está bloqueado (`av-touch-play` + `touch-action: none` en `av-player--active-touch`).
+- [x] Input de iniciales en game over táctil tiene altura fija (~34px), no se estira por flex.
 
 ### Tetris móvil
 
-- [ ] En modo táctil, el tablero completo (20 filas) es visible sin recorte vertical.
-- [ ] El panel NEXT aparece compacto a la derecha del tablero.
-- [ ] La lista de controles de teclado del panel lateral no se muestra en móvil.
+- [x] En modo táctil, el tablero completo (20 filas) es visible sin recorte vertical.
+- [x] El panel NEXT aparece compacto a la derecha del tablero.
+- [x] La lista de controles de teclado del panel lateral no se muestra en móvil.
 
 ### Skins
 
-- [ ] En modo táctil se puede cambiar el skin desde la toolbar con el selector compacto (`SKIN` + `<select>`).
+- [x] En modo táctil se puede cambiar el skin desde la toolbar con el selector compacto (`SKIN` + `<select>`).
 
 ### Build
 
-- [ ] `npm run lint` pasa sin errores nuevos.
-- [ ] `npm run build` completa sin errores.
+- [x] `npm run lint` pasa sin errores nuevos.
+- [x] `npm run build` completa sin errores.
 
 ## Decisiones
 
@@ -331,9 +369,13 @@ No se introducen tablas Supabase, `localStorage` ni cambios en el catálogo de j
 - **Sí:** Botones A/B con color distinto (magenta / amarillo). Etiqueta accesible opcional vía `controlsLabel`.
 - **Sí:** Ocultar `.crt-bottom` en modo táctil para ganar altura al canvas.
 - **No:** A la izquierda del D-pad ni A/B apilados verticalmente — el layout acordado es D-pad | gap | [A][B].
-- **Sí:** Tap táctil = un paso discreto (`pulseVirtualAction`). El hold continuo (`setVirtualInput`) arranca ~500 ms después (DAS tipo teclado Windows). En Tetris el ARR táctil es **33 ms**, alineado al repeat típico del browser; `dt` del loop está en ms.
-- **No:** `setPointerCapture` ni `preventDefault` en `pointerdown` de los botones virtuales. En móvil retrasa o pierde el `pointerup` y el botón queda “pegado”.
-- **Sí:** Liberación global en capture (`pointerup` / `pointercancel` / `touchend`) y `touch-action: none` en los botones. El estilo pressed no usa `:active` ni `transform` (en iOS `:active` se queda pegado y el translate mueve el hit-box bajo el dedo).
+- **Sí:** Modelo dual en **todos** los botones con acción: `pointerdown` → siempre `pulseVirtualAction` (1 paso); si no es solo-pulso → tras 500 ms `setVirtualInput` (hold). Tetris ↑ / A y Asteroids A son solo-pulso.
+- **Sí:** Tetris hold: `setVirtualInput` solo guarda estado; `processVirtualHoldInput(dt)` repite en el loop cada **33 ms** (`VIRTUAL_INPUT_REPEAT_MS`; `dt` en **milisegundos**). Bug histórico: usar `0.05` segundos contra `dt` en ms repetía cada frame (~60 celdas/s).
+- **Sí:** Arkanoid tap: `PADDLE_STEP` (32 px). Hold: misma velocidad que teclado (`PADDLE_SPEED` 400 px/s).
+- **Sí:** Asteroids tap: `TAP_ROTATE` (π/12) e impulso `TAP_THRUST` (42). Hold: rotación/thrust continuo vía `keys`.
+- **No:** `setPointerCapture` ni `preventDefault` en `pointerdown`. Ignorar mouse sintético 1.2 s tras touch.
+- **Sí:** Liberación global en capture; `touch-action: none` en controles; pressed solo con `--pressed` (sin `:active`/`transform`).
+- **Sí:** Desmontar `VirtualGameControls` en pausa/game over (`touchMode && !paused && !over`), no solo `disabled`.
 
 ## Riesgos
 
@@ -342,7 +384,10 @@ No se introducen tablas Supabase, `localStorage` ni cambios en el catálogo de j
 | Dedos cubren parte del canvas en portrait | Barra fija abajo separada del CRT; canvas arriba con `max-width: 100%` ya existente. |
 | `pointer: coarse` no detecta algunos tablets híbridos | Combinar con `viewport < 768px` como segundo criterio (OR, no AND). |
 | Mantener pulsado en Snake encola giros erráticos | Snake solo acepta un cambio de dirección por tick; reutilizar lógica de bloqueo 180° existente. |
-| Pulso de disparo en Asteroids demasiado rápido si A se interpreta como hold | `fire` solo vía `pulseVirtualAction` en `pointerdown`, no en `setVirtualInput`. |
+| Pulso de disparo en Asteroids demasiado rápido si A se interpreta como hold | `fire` en `PULSE_ACTIONS` → solo `pulseVirtualAction`, nunca hold. |
+| Tap móvil recorre varios pasos (dedo abajo 150–300 ms) | Tap siempre vía `pulseVirtualAction`; hold solo tras 500 ms. |
+| Mouse sintético tras touch deja hold activo | Suprimir `pointerType: mouse` 1.2 s; liberación global en `touchend`. |
+| Tetris hold demasiado rápido | `VIRTUAL_INPUT_REPEAT_MS = 33` con `dt` en ms (no segundos). |
 | Selector de skins no cabe en barra inferior | `GameSkinSelector` `variant="compact"` (`<select>`) en la toolbar de una fila. |
 | Scroll en game over despega el fondo del sitio | `overflow: hidden` en `html`/`body` con `av-touch-play`; scroll solo dentro de `.crt-gameover`. |
 | Toques accidentales entre D-pad y acciones | `gap` grande entre grupos en `.virtual-controls`; gaps internos pequeños. |
@@ -358,3 +403,44 @@ No se introducen tablas Supabase, `localStorage` ni cambios en el catálogo de j
 - Tests automatizados E2E en dispositivos reales.
 
 Cada uno de estos, si llega, va en su propio spec.
+
+## Archivos implementados (referencia skill)
+
+```
+lib/games/touch-controls/
+  types.ts              # VirtualButton, VirtualInputState, TouchAction, GameTouchMap
+  maps.ts               # TOUCH_MAPS por juego
+  detect-touch-mode.ts  # isTouchPlayMode, useTouchPlayMode
+  use-touch-play-chrome.ts  # av-touch-play en <html>, scroll lock
+
+components/
+  virtual-game-controls.tsx   # D-pad + A/B, tap + hold
+  game-player-shell.tsx       # touchMode, av-touch-bar, overlays
+  game-skin-selector.tsx      # variant="compact"
+  games/{slug}-player.tsx     # TOUCH_MAPS + VirtualGameControls condicional
+  games/{slug}-canvas.tsx     # EMPTY_VIRTUAL_INPUT al pausar
+
+lib/games/{slug}/engine.ts    # setVirtualInput + pulseVirtualAction
+lib/games/arkanoid/constants.ts  # PADDLE_STEP
+
+app/arcade-vault.css          # .av-touch-play, .av-touch-bar, .virtual-controls, Tetris touch layout
+specs/10-controles-tactiles-movil.md
+```
+
+**Cableado por juego (patrón):**
+
+```tsx
+// {slug}-player.tsx
+const touchMode = useTouchPlayMode();
+touchControls={
+  touchMode && !paused && !over ? (
+    <VirtualGameControls
+      map={TOUCH_MAPS.{slug}}
+      onInputChange={(s) => engineRef.current?.setVirtualInput(s)}
+      onActionPulse={(a) => engineRef.current?.pulseVirtualAction(a)}
+    />
+  ) : undefined
+}
+```
+
+**Dev LAN (fuera de este spec):** probar en móvil con `ALLOWED_DEV_ORIGINS` en `.env.local` (ver `.env.example`); no commitear IP personal.
