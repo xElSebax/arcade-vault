@@ -1,4 +1,8 @@
 import type { GameSkinId } from "@/lib/games/skins/types";
+import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
 
 export type AsteroidsPhase = "playing" | "dead" | "gameover";
 
@@ -18,4 +22,6 @@ export interface AsteroidsEngine {
   setSkin(skin: GameSkinId): void;
   getSkin(): GameSkinId;
   onStateChange(cb: (state: AsteroidsGameState) => void): () => void;
+  setVirtualInput(state: VirtualInputState): void;
+  pulseVirtualAction(action: TouchAction): void;
 }

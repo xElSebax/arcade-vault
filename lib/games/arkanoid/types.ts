@@ -1,4 +1,8 @@
 import type { GameSkinId } from "@/lib/games/skins/types";
+import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
 
 export type ArkanoidPhase = "playing" | "gameover" | "win";
 
@@ -27,4 +31,6 @@ export interface ArkanoidEngine {
   setSkin(skin: GameSkinId): void;
   getSkin(): GameSkinId;
   onStateChange(cb: (state: ArkanoidGameState) => void): () => void;
+  setVirtualInput(state: VirtualInputState): void;
+  pulseVirtualAction(action: TouchAction): void;
 }

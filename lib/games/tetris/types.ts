@@ -1,3 +1,9 @@
+import type { GameSkinId } from "@/lib/games/skins/types";
+import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
+
 export type TetrisPhase = "playing" | "gameover";
 
 export interface TetrisGameState {
@@ -6,8 +12,6 @@ export interface TetrisGameState {
   level: number;
   phase: TetrisPhase;
 }
-
-import type { GameSkinId } from "@/lib/games/skins/types";
 
 export interface TetrisEngine {
   mount(canvas: HTMLCanvasElement, nextCanvas: HTMLCanvasElement): void;
@@ -18,4 +22,6 @@ export interface TetrisEngine {
   setSkin(skin: GameSkinId): void;
   getSkin(): GameSkinId;
   onStateChange(cb: (state: TetrisGameState) => void): () => void;
+  setVirtualInput(state: VirtualInputState): void;
+  pulseVirtualAction(action: TouchAction): void;
 }

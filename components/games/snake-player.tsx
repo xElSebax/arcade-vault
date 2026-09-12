@@ -5,8 +5,15 @@ import { saveScore } from "@/app/actions/save-score";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { SnakeCanvas } from "@/components/games/snake-canvas";
+import { VirtualGameControls } from "@/components/virtual-game-controls";
 import { useAuth } from "@/components/providers/auth-provider";
 import type { SnakeEngine, SnakeGameState } from "@/lib/games/snake/types";
+import { useTouchPlayMode } from "@/lib/games/touch-controls/detect-touch-mode";
+import { TOUCH_MAPS } from "@/lib/games/touch-controls/maps";
+import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
 import { useGameSkin } from "@/lib/player-skin";
 import { usePlayerName, writePlayerName } from "@/lib/player-name";
 
@@ -18,6 +25,7 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
   const [skin, setSkin] = useGameSkin(game.id);
+  const touchMode = useTouchPlayMode();
   const engineRef = useRef<SnakeEngine | null>(null);
 
   const [score, setScore] = useState(0);
@@ -66,6 +74,14 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
     engineRef.current?.reset();
   };
 
+  const handleVirtualInput = useCallback((state: VirtualInputState) => {
+    engineRef.current?.setVirtualInput(state);
+  }, []);
+
+  const handleActionPulse = useCallback((_action: TouchAction) => {
+    engineRef.current?.pulseVirtualAction(_action);
+  }, []);
+
   const handleSaveScore = async () => {
     if (saved) return;
 
@@ -105,6 +121,17 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
       onSaveScore={handleSaveScore}
       onInitialsChange={setInitials}
       saveError={saveError}
+      touchMode={touchMode}
+      touchControls={
+        touchMode && !paused && !over ? (
+          <VirtualGameControls
+            map={TOUCH_MAPS.snake}
+            onInputChange={handleVirtualInput}
+            onActionPulse={handleActionPulse}
+            controlsLabel={`Controles de ${game.title}`}
+          />
+        ) : undefined
+      }
       arena={
         <SnakeCanvas
           paused={paused || over}

@@ -5,11 +5,18 @@ import { saveScore } from "@/app/actions/save-score";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { ArkanoidCanvas } from "@/components/games/arkanoid-canvas";
+import { VirtualGameControls } from "@/components/virtual-game-controls";
 import { useAuth } from "@/components/providers/auth-provider";
 import type {
   ArkanoidEngine,
   ArkanoidGameState,
 } from "@/lib/games/arkanoid/types";
+import { useTouchPlayMode } from "@/lib/games/touch-controls/detect-touch-mode";
+import { TOUCH_MAPS } from "@/lib/games/touch-controls/maps";
+import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
 import { useGameSkin } from "@/lib/player-skin";
 import { usePlayerName, writePlayerName } from "@/lib/player-name";
 
@@ -21,6 +28,7 @@ export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
   const [skin, setSkin] = useGameSkin(game.id);
+  const touchMode = useTouchPlayMode();
   const engineRef = useRef<ArkanoidEngine | null>(null);
 
   const [score, setScore] = useState(0);
@@ -78,6 +86,14 @@ export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
     engineRef.current?.reset();
   };
 
+  const handleVirtualInput = useCallback((state: VirtualInputState) => {
+    engineRef.current?.setVirtualInput(state);
+  }, []);
+
+  const handleActionPulse = useCallback((action: TouchAction) => {
+    engineRef.current?.pulseVirtualAction(action);
+  }, []);
+
   const handleSaveScore = async () => {
     if (saved) return;
 
@@ -116,6 +132,17 @@ export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
       onSaveScore={handleSaveScore}
       onInitialsChange={setInitials}
       saveError={saveError}
+      touchMode={touchMode}
+      touchControls={
+        touchMode && !paused && !over ? (
+          <VirtualGameControls
+            map={TOUCH_MAPS.arkanoid}
+            onInputChange={handleVirtualInput}
+            onActionPulse={handleActionPulse}
+            controlsLabel={`Controles de ${game.title}`}
+          />
+        ) : undefined
+      }
       arena={
         <ArkanoidCanvas
           paused={paused || over}

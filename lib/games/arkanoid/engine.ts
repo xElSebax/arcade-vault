@@ -10,6 +10,7 @@ import {
   H,
   MAX_DT,
   PADDLE_SPEED,
+  PADDLE_STEP,
   STARTING_LIVES,
   W,
 } from "./constants";
@@ -46,6 +47,10 @@ import {
   loadSpritesheet,
   isSpritesheetReady,
 } from "./spritesheet";
+import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
 import type {
   ArkanoidEngine,
   ArkanoidGameState,
@@ -460,6 +465,24 @@ export function createArkanoidEngine(): ArkanoidEngine {
 
     getSkin(): GameSkinId {
       return currentSkin;
+    },
+
+    setVirtualInput(state: VirtualInputState): void {
+      keys.ArrowLeft = state.left;
+      keys.ArrowRight = state.right;
+    },
+
+    pulseVirtualAction(action: TouchAction): void {
+      if (paused || phase !== "playing") return;
+
+      if (action === "move_left") {
+        paddle.x = clamp(paddle.x - PADDLE_STEP, 0, W - paddle.w);
+        return;
+      }
+
+      if (action === "move_right") {
+        paddle.x = clamp(paddle.x + PADDLE_STEP, 0, W - paddle.w);
+      }
     },
   };
 }

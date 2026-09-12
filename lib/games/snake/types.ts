@@ -1,4 +1,8 @@
 import type { GameSkinId } from "@/lib/games/skins/types";
+import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
 
 export type SnakePhase = "playing" | "gameover";
 
@@ -18,4 +22,6 @@ export interface SnakeEngine {
   onStateChange(cb: (state: SnakeGameState) => void): () => void;
   setSkin(skin: GameSkinId): void;
   getSkin(): GameSkinId;
+  setVirtualInput(state: VirtualInputState): void;
+  pulseVirtualAction(action: TouchAction): void;
 }

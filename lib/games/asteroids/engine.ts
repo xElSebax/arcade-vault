@@ -17,6 +17,10 @@ import { PowerUp } from "./entities/power-up";
 import { Ship } from "./entities/ship";
 import { ASTEROIDS_SKINS } from "./skins";
 import type {
+  TouchAction,
+  VirtualInputState,
+} from "@/lib/games/touch-controls/types";
+import type {
   AsteroidsEngine,
   AsteroidsGameState,
   AsteroidsPhase,
@@ -31,6 +35,8 @@ const GAME_KEYS = new Set([
 ]);
 
 const SAFE_DIST = 130;
+const TAP_ROTATE = Math.PI / 12;
+const TAP_THRUST = 42;
 
 export function createAsteroidsEngine(): AsteroidsEngine {
   let canvas: HTMLCanvasElement | null = null;
@@ -435,6 +441,34 @@ export function createAsteroidsEngine(): AsteroidsEngine {
 
     getSkin(): GameSkinId {
       return currentSkin;
+    },
+
+    setVirtualInput(state: VirtualInputState): void {
+      keys.ArrowLeft = state.left;
+      keys.ArrowRight = state.right;
+      keys.ArrowUp = state.up;
+    },
+
+    pulseVirtualAction(action: TouchAction): void {
+      if (paused || phase === "gameover" || ship.dead) return;
+
+      switch (action) {
+        case "fire":
+          justPressed.Space = true;
+          break;
+        case "rotate_left":
+          ship.angle -= TAP_ROTATE;
+          break;
+        case "rotate_right":
+          ship.angle += TAP_ROTATE;
+          break;
+        case "thrust":
+          ship.vx += Math.cos(ship.angle) * TAP_THRUST;
+          ship.vy += Math.sin(ship.angle) * TAP_THRUST;
+          break;
+        default:
+          break;
+      }
     },
   };
 }

@@ -2,8 +2,11 @@
 export const W = 800;
 export const H = 600;
 
-/** Paddle movement speed (px/s) with keyboard. */
+/** Paddle movement speed (px/s) with keyboard / hold táctil. */
 export const PADDLE_SPEED = 400;
+
+/** Desplazamiento discreto por tap táctil (px). */
+export const PADDLE_STEP = 32;
 
 /** Block grid dimensions. */
 export const BLOCK_COLS = 10;

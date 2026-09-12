@@ -9,10 +9,20 @@ import {
   type TetrisPlayState,
 } from "./pieces";
 import { TETRIS_SKINS } from "./skins";
+import {
+  EMPTY_VIRTUAL_INPUT,
+  type TouchAction,
+  type VirtualInputState,
+} from "@/lib/games/touch-controls/types";
 import type { TetrisEngine, TetrisGameState, TetrisPhase } from "./types";
 import { collide, drawBlock, ghostY } from "./utils";
 
 const NEXT_BLOCK = 30;
+/**
+ * Browser/OS key repeat on Windows is typically ~33 ms (SPI_GETKEYBOARDSPEED=31).
+ * `loop` dt is milliseconds from rAF.
+ */
+const VIRTUAL_INPUT_REPEAT_MS = 33;
 
 const GAME_KEYS = new Set([
   "ArrowLeft",
@@ -53,6 +63,8 @@ export function createTetrisEngine(): TetrisEngine {
     }
   }
   let play: TetrisPlayState = createInitialState();
+  let virtualInput: VirtualInputState = { ...EMPTY_VIRTUAL_INPUT };
+  let virtualInputRepeatAccum = 0;
 
   function currentState(): TetrisGameState {
     return {
@@ -160,6 +172,74 @@ export function createTetrisEngine(): TetrisEngine {
     draw();
   }
 
+  function finishAction(phaseAfterAction: TetrisPhase | null): boolean {
+    if (phaseAfterAction === "gameover") {
+      handleGameOver();
+      return false;
+    }
+    if (phaseAfterAction !== null) {
+      emitState();
+    }
+    draw();
+    return true;
+  }
+
+  function moveLeft(): void {
+    if (
+      !collide(play.board, play.current.shape, play.current.x - 1, play.current.y)
+    ) {
+      play.current.x--;
+      draw();
+    }
+  }
+
+  function moveRight(): void {
+    if (
+      !collide(play.board, play.current.shape, play.current.x + 1, play.current.y)
+    ) {
+      play.current.x++;
+      draw();
+    }
+  }
+
+  function applySoftDrop(): boolean {
+    return finishAction(softDrop(play));
+  }
+
+  function applyRotate(): void {
+    tryRotate(play.current, play.board);
+    draw();
+  }
+
+  function applyHardDrop(): boolean {
+    return finishAction(hardDrop(play));
+  }
+
+  function processVirtualHoldInput(dt: number): void {
+    if (paused || play.phase === "gameover") return;
+
+    const hasHoldInput =
+      virtualInput.left || virtualInput.right || virtualInput.down;
+    if (!hasHoldInput) {
+      virtualInputRepeatAccum = 0;
+      return;
+    }
+
+    virtualInputRepeatAccum += dt;
+    if (virtualInputRepeatAccum < VIRTUAL_INPUT_REPEAT_MS) return;
+    virtualInputRepeatAccum = 0;
+
+    if (virtualInput.left) {
+      moveLeft();
+    }
+    if (virtualInput.right) {
+      moveRight();
+    }
+    if (virtualInput.down && !applySoftDrop()) {
+      return;
+    }
+  }
+
   function onKeyDown(e: KeyboardEvent): void {
     if (GAME_KEYS.has(e.code)) {
       e.preventDefault();
@@ -167,46 +247,26 @@ export function createTetrisEngine(): TetrisEngine {
     if (e.code === "KeyP") return;
     if (paused || play.phase === "gameover") return;
 
-    let phaseAfterAction: TetrisPhase | null = null;
-
     switch (e.code) {
       case "ArrowLeft":
-        if (
-          !collide(play.board, play.current.shape, play.current.x - 1, play.current.y)
-        ) {
-          play.current.x--;
-        }
+        moveLeft();
         break;
       case "ArrowRight":
-        if (
-          !collide(play.board, play.current.shape, play.current.x + 1, play.current.y)
-        ) {
-          play.current.x++;
-        }
+        moveRight();
         break;
       case "ArrowDown":
-        phaseAfterAction = softDrop(play);
+        applySoftDrop();
         break;
       case "ArrowUp":
       case "KeyX":
-        tryRotate(play.current, play.board);
+        applyRotate();
         break;
       case "Space":
-        phaseAfterAction = hardDrop(play);
+        applyHardDrop();
         break;
       default:
         return;
     }
-
-    if (phaseAfterAction === "gameover") {
-      handleGameOver();
-      return;
-    }
-    if (phaseAfterAction !== null) {
-      emitState();
-    }
-
-    draw();
   }
 
   function loop(ts: number): void {
@@ -229,6 +289,8 @@ export function createTetrisEngine(): TetrisEngine {
         emitState();
       }
     }
+
+    processVirtualHoldInput(dt);
 
     draw();
     rafId = requestAnimationFrame(loop);
@@ -254,6 +316,8 @@ export function createTetrisEngine(): TetrisEngine {
   function initGame(): void {
     play = createInitialState();
     dropAccum = 0;
+    virtualInput = { ...EMPTY_VIRTUAL_INPUT };
+    virtualInputRepeatAccum = 0;
     emitState();
     draw();
   }
@@ -327,6 +391,40 @@ export function createTetrisEngine(): TetrisEngine {
 
     getSkin(): GameSkinId {
       return currentSkin;
+    },
+
+    setVirtualInput(state: VirtualInputState): void {
+      if (paused || play.phase === "gameover") {
+        virtualInput = { ...EMPTY_VIRTUAL_INPUT };
+        return;
+      }
+
+      virtualInput = { ...state };
+      virtualInputRepeatAccum = 0;
+    },
+
+    pulseVirtualAction(action: TouchAction): void {
+      if (paused || play.phase === "gameover") return;
+
+      switch (action) {
+        case "move_left":
+          moveLeft();
+          break;
+        case "move_right":
+          moveRight();
+          break;
+        case "soft_drop":
+          applySoftDrop();
+          break;
+        case "rotate":
+          applyRotate();
+          break;
+        case "hard_drop":
+          applyHardDrop();
+          break;
+        default:
+          break;
+      }
     },
   };
 }
