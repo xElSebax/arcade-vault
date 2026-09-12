@@ -1,0 +1,41 @@
+---
+description: Evaluates which retro canvas games fit Arcade Vault and maintains suggestion memory. Use when choosing the next game to integrate or exploring catalog gaps. Does NOT write specs or code.
+alwaysApply: false
+---
+
+# /game-planner — Game selection and platform fit advisor
+
+This rule triggers the **game-planner** skill. Read `.claude/skills/game-planner/SKILL.md` and follow it strictly.
+
+## What this does
+
+- Evaluates retro canvas game candidates against platform fit criteria
+- Ranks 3–5 recommendations with scores and rationale
+- Maintains persistent memory in `references/game-planner/suggestions-log.md`
+- Hands off to `@add-game {slug}` when the user picks a game
+
+## What this does NOT do
+
+- Write specs, application code, migrations, or CSS
+- Mark specs as `Aprobado`
+- Implement games — that is `@spec-impl` after human approval
+
+## Supporting files
+
+- `.claude/skills/game-planner/SKILL.md` — four-phase workflow and hard rules
+- `.claude/skills/game-planner/criteria.md` — evaluation matrix and examples
+- `references/game-planner/suggestions-log.md` — persistent suggestion memory (read at start, append at end)
+
+## Workflow summary
+
+1. **Context** — read log, catalog, started-games, specs, criteria
+2. **Understand** — clarify priorities and constraints
+3. **Evaluate** — rank 3–5 candidates with fit scores
+4. **Decide** — user picks or discards; hand off to `@add-game` if chosen
+5. **Persist** — append session to `suggestions-log.md`, then **STOP**
+
+## Integration pipeline
+
+```
+@game-planner → user picks game → @add-game {slug} → Aprobado → @spec-impl
+```

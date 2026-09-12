@@ -64,6 +64,30 @@ supabase/migrations/                 # Seed del juego en tabla games
 
 **Referencias de port:** prototipos vanilla en `references/started-games/` (p. ej. `02-asteroids`, `03-tetris`, `04-arkanoid`).
 
+**Pipeline de integración:**
+
+```
+@game-planner → elegir juego → @add-game {slug} → Aprobado → @spec-impl NN-slug
+```
+
+## Agente `@game-planner`
+
+Evalúa qué juegos retro canvas encajan en Arcade Vault **antes** de escribir un spec. Piensa, rankea candidatos y mantiene memoria de lo ya sugerido.
+
+| Aspecto | Detalle |
+|---------|---------|
+| Invocación | `@game-planner` o `/game-planner` · argumento opcional: criterios (p. ej. `shooter bajo esfuerzo`) |
+| Skill | [`.claude/skills/game-planner/SKILL.md`](.claude/skills/game-planner/SKILL.md) |
+| Criterios | [`.claude/skills/game-planner/criteria.md`](.claude/skills/game-planner/criteria.md) |
+| Memoria | [`references/game-planner/suggestions-log.md`](references/game-planner/suggestions-log.md) — log versionado en git |
+| Regla Cursor | [`.cursor/rules/game-planner.mdc`](.cursor/rules/game-planner.mdc) |
+
+**Qué hace:** lee catálogo, placeholders, prototipos y el log de sugerencias; propone 3–5 candidatos con puntuación de encaje (1–10); registra cada sesión en el log.
+
+**Qué no hace:** no escribe specs, código, migraciones ni branches. Si el usuario elige un juego, hace handoff a `@add-game {slug}`.
+
+**Estados en el log:** `sugerido` · `descartado` · `en_spec` · `implementado` · `revisitado`
+
 ## Skills
 
 Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar con `/` en Claude Code o `@` en Cursor.
@@ -71,13 +95,14 @@ Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar 
 | Skill / regla | Uso |
 |---------------|-----|
 | `/frontend-design` | Diseñar la interfaz de usuario (estética retro CRT, tokens en `app/arcade-vault.css`). |
+| `@game-planner` | Evaluar qué juego retro encaja en la plataforma; mantener memoria en `references/game-planner/suggestions-log.md`. **No escribe specs** — handoff a `@add-game`. |
 | `@spec` | Diseñar un spec genérico antes de escribir código. |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard). **Extiende `@spec`** — lee primero `/spec`, luego aplica patrones de SPEC 05 y SPEC 06. **No implementa código** — solo produce `specs/NN-slug.md` en `Borrador`. |
 | `@spec-impl` | Implementar un spec en estado `Aprobado`. |
 
 Usa siempre `/frontend-design` para diseñar la interfaz de usuario.
 
-Para integrar un juego nuevo: `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug`.
+Para integrar un juego nuevo: `@game-planner` → elegir juego → `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug`.
 
 ## Estructura del proyecto
 
@@ -111,11 +136,12 @@ supabase/migrations/      # SQL: games, scores, seeds, RLS
 specs/                    # Specs de diseño (spec-driven development)
 references/
   implemented-games.md    # Inventario de juegos (jugables + placeholders)
+  game-planner/           # Memoria de sugerencias (@game-planner)
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
   source-assets/          # Assets fuente
-.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, nextjs)
-.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, frontend-design)
+.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, @game-planner, nextjs)
+.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, game-planner, frontend-design)
 ```
 
 Alias de importación: `@/*` apunta a la raíz del proyecto.
@@ -188,9 +214,19 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 
 ### Ciclo de trabajo
 
+**Features genéricas:**
+
 1. **`@spec`** — Diseña un spec haciendo preguntas clarificadoras. Guarda en `specs/NN-slug.md` con estado `Borrador`.
 2. **Revisión humana** — El humano relee el spec fuera del chat y cambia el estado a `Aprobado` manualmente.
 3. **`@spec-impl`** — Valida que el estado sea `Aprobado`, crea la rama `spec-NN-slug` y implementa paso a paso con pausas para revisar diffs.
+
+**Integración de un juego nuevo:**
+
+1. **`@game-planner`** — Evalúa encaje, propone candidatos y persiste la sesión en `references/game-planner/suggestions-log.md`.
+2. **Elección humana** — Se elige el juego a integrar.
+3. **`@add-game {slug}`** — Genera `specs/NN-slug.md` en `Borrador` (extiende `@spec` con patrones SPEC 05 + 06).
+4. **Revisión humana** — Cambiar estado a `Aprobado`.
+5. **`@spec-impl NN-slug`** — Implementación paso a paso.
 
 Configuración en `specs/.spec-config.yml` (`AutoCreateBranch: true` crea la rama automáticamente).
 
@@ -219,6 +255,7 @@ Invocar con `@` en el chat:
 
 | Regla | Uso |
 |-------|-----|
+| `@game-planner` | Evaluar qué juego retro encaja; memoria en `references/game-planner/suggestions-log.md` |
 | `@spec` | Diseñar un spec antes de escribir código |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard) |
 | `@spec-impl` | Implementar un spec aprobado |
