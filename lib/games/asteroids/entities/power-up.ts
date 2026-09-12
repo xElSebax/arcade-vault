@@ -1,4 +1,5 @@
 import { H, POWERUP_TTL, W } from "../constants";
+import type { AsteroidsSkinTokens } from "../skins";
 import { rand, wrap } from "../utils";
 
 export class PowerUp {
@@ -29,23 +30,28 @@ export class PowerUp {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
     if (this.ttl < 2 && Math.floor(this.ttl * 8) % 2 === 0) return;
 
     const pulse = 0.85 + Math.sin(performance.now() / 150) * 0.15;
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.PI / 4);
-    ctx.strokeStyle = "#0ff";
+    if (tokens.glowBlur) {
+      ctx.shadowBlur = tokens.glowBlur;
+      ctx.shadowColor = tokens.powerUp;
+    }
+    ctx.strokeStyle = tokens.powerUp;
     ctx.lineWidth = 2;
     const r = this.radius * pulse;
     ctx.strokeRect(-r, -r, r * 2, r * 2);
     ctx.restore();
 
-    ctx.fillStyle = "#0ff";
+    ctx.fillStyle = tokens.powerUp;
     ctx.font = "bold 12px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("3x", this.x, this.y);
+    ctx.shadowBlur = 0;
   }
 }

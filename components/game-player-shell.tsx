@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import type { Game } from "@/app/data";
 import { Btn } from "@/components/btn";
+import { GameSkinSelector } from "@/components/game-skin-selector";
+import type { GameSkinId } from "@/lib/games/skins/types";
 
 interface GamePlayerShellProps {
   game: Game;
@@ -25,6 +27,8 @@ interface GamePlayerShellProps {
   onSaveScore: () => void;
   onInitialsChange: (value: string) => void;
   saveError?: string | null;
+  skin?: GameSkinId;
+  onSkinChange?: (skin: GameSkinId) => void;
   arena: ReactNode;
 }
 
@@ -47,6 +51,8 @@ export function GamePlayerShell({
   onSaveScore,
   onInitialsChange,
   saveError,
+  skin,
+  onSkinChange,
   arena,
 }: GamePlayerShellProps) {
   const router = useRouter();
@@ -91,6 +97,9 @@ export function GamePlayerShell({
           )}
         </div>
         <div className="hud-actions">
+          {skin && onSkinChange && (
+            <GameSkinSelector skin={skin} onSkinChange={onSkinChange} />
+          )}
           <Btn variant="yellow" onClick={onTogglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </Btn>

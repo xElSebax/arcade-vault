@@ -1,4 +1,5 @@
 import { H, W } from "../constants";
+import type { AsteroidsSkinTokens } from "../skins";
 import { wrap } from "../utils";
 
 const BULLET_SPEED = 520;
@@ -30,10 +31,15 @@ export class Bullet {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = "#fff";
+  draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
+    if (tokens.glowBlur) {
+      ctx.shadowBlur = tokens.glowBlur;
+      ctx.shadowColor = tokens.bullet;
+    }
+    ctx.fillStyle = tokens.bullet;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
   }
 }

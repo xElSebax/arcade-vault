@@ -1,4 +1,5 @@
 import { H, TRIPLE_SPREAD, W } from "../constants";
+import type { AsteroidsSkinTokens } from "../skins";
 import { rand, wrap } from "../utils";
 import { Bullet } from "./bullet";
 
@@ -94,14 +95,18 @@ export class Ship {
     return [new Bullet(ox, oy, this.angle)];
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
     if (this.dead) return;
     if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0) return;
 
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = "#fff";
+    if (tokens.glowBlur) {
+      ctx.shadowBlur = tokens.glowBlur;
+      ctx.shadowColor = tokens.ship;
+    }
+    ctx.strokeStyle = tokens.ship;
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
 
@@ -114,11 +119,12 @@ export class Ship {
     ctx.stroke();
 
     if (this.thrusting && Math.random() > 0.35) {
+      ctx.shadowColor = tokens.shipThrust;
       ctx.beginPath();
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+      ctx.strokeStyle = tokens.shipThrust;
       ctx.stroke();
     }
 
