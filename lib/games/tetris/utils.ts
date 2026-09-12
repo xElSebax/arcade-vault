@@ -1,4 +1,5 @@
-import { COLORS, COLS, ROWS } from "./constants";
+import { COLS, ROWS } from "./constants";
+import type { TetrisSkinTokens } from "./skins";
 
 export interface ActivePiece {
   type: number;
@@ -55,16 +56,31 @@ export function drawBlock(
   y: number,
   colorIndex: number,
   size: number,
+  tokens: TetrisSkinTokens,
   alpha?: number,
 ): void {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const color = tokens.colors[colorIndex];
   if (!color) return;
 
+  const px = x * size + 1;
+  const py = y * size + 1;
+  const blockSize = size - 2;
+
   ctx.globalAlpha = alpha ?? 1;
+
+  if (tokens.glowBlur && alpha === undefined) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = tokens.glowBlur;
+  }
+
   ctx.fillStyle = color;
-  ctx.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  ctx.fillStyle = "rgba(255,255,255,0.12)";
-  ctx.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+  ctx.fillRect(px, py, blockSize, blockSize);
+
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = "transparent";
+
+  ctx.fillStyle = tokens.blockHighlight;
+  ctx.fillRect(px, py, blockSize, 4);
   ctx.globalAlpha = 1;
 }

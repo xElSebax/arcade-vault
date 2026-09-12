@@ -7,6 +7,7 @@ import { GamePlayerShell } from "@/components/game-player-shell";
 import { TetrisCanvas } from "@/components/games/tetris-canvas";
 import { useAuth } from "@/components/providers/auth-provider";
 import type { TetrisEngine, TetrisGameState } from "@/lib/games/tetris/types";
+import { useGameSkin } from "@/lib/player-skin";
 import { usePlayerName, writePlayerName } from "@/lib/player-name";
 
 interface TetrisPlayerProps {
@@ -16,6 +17,7 @@ interface TetrisPlayerProps {
 export function TetrisPlayer({ game }: TetrisPlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
+  const [skin, setSkin] = useGameSkin(game.id);
   const engineRef = useRef<TetrisEngine | null>(null);
 
   const [score, setScore] = useState(0);
@@ -97,6 +99,8 @@ export function TetrisPlayer({ game }: TetrisPlayerProps) {
       paused={paused}
       over={over}
       saved={saved}
+      skin={skin}
+      onSkinChange={setSkin}
       onTogglePause={() => setPaused((p) => !p)}
       onEndGame={endGame}
       onRestart={restart}
@@ -106,6 +110,7 @@ export function TetrisPlayer({ game }: TetrisPlayerProps) {
       arena={
         <TetrisCanvas
           paused={paused || over}
+          skin={skin}
           onStateChange={handleStateChange}
           engineRef={engineRef}
         />

@@ -11,7 +11,7 @@
 | ID | Título | classic | retro | neon | Notas |
 |----|--------|---------|-------|------|-------|
 | `asteroids` | ASTEROIDS | completo | completo | completo | Primera sesión skins; infra compartida creada |
-| `tetris` | TETRIS | pendiente | pendiente | pendiente | |
+| `tetris` | TETRIS | completo | completo | completo | Tokens COLORS+grid; classic = baseline CSS bg |
 | `arkanoid` | ARKANOID | completo | completo | completo | Sprites raw classic; retro/neon con filter draw-time |
 | `snake` | SNAKE | completo | completo | completo | Tokens body/head/grid; sprites fruta sin cambio |
 
@@ -64,3 +64,10 @@ Skins obligatorios por juego: **classic** (default), **retro**, **neon**.
 **Skins:** classic · retro · neon → completo
 **Archivos:** `lib/games/snake/skins.ts` (nuevo), `lib/games/snake/engine.ts`, `lib/games/snake/types.ts`, `components/games/snake-canvas.tsx`, `components/games/snake-player.tsx`
 **Verificación:** checklist dark-mode OK — classic regresión visual, retro con fosforo verde `#33ff66` y ámbar en contorno de cabeza, neon con cyan/magenta/amarillo de marca y `glowBlur: 8`; grid sutil en los tres skins; frutas distinguibles del fondo; selector persiste en `av_game_skin_snake`; hot-swap sin reset de score.
+
+### 2026-09-12 — tetris
+
+**Contexto:** Cuarta sesión skins; infra compartida reutilizada. Classic = baseline exacto (COLORS de `constants.ts`, grid `#22222e`, fondo transparente vía CSS `#12121c`). Retro/neon rellenan canvas con `#050508` / `#000`.
+**Skins:** classic · retro · neon → completo
+**Archivos:** `lib/games/tetris/skins.ts` (nuevo), `constants.ts`, `utils.ts`, `engine.ts`, `types.ts`, `tetris-canvas.tsx`, `tetris-player.tsx`
+**Verificación:** checklist dark-mode OK — classic regresión visual idéntica al baseline; retro con paleta fosforo/ámbar limitada y grid `#1a1a22`; neon con tokens de marca (`#00f5ff`, `#f5ff00`, `#ff006e`, `#00ff88`) y `glowBlur: 6` en bloques; piezas distinguibles en los tres skins; selector persiste en `av_game_skin_tetris`; hot-swap sin reset de score.

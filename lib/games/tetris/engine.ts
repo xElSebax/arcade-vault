@@ -1,3 +1,4 @@
+import { DEFAULT_GAME_SKIN, type GameSkinId } from "@/lib/games/skins/types";
 import { BLOCK, COLS, ROWS } from "./constants";
 import {
   createInitialState,
@@ -7,10 +8,10 @@ import {
   tryRotate,
   type TetrisPlayState,
 } from "./pieces";
+import { TETRIS_SKINS } from "./skins";
 import type { TetrisEngine, TetrisGameState, TetrisPhase } from "./types";
 import { collide, drawBlock, ghostY } from "./utils";
 
-const GRID_LINE = "#22222e";
 const NEXT_BLOCK = 30;
 
 const GAME_KEYS = new Set([
@@ -32,8 +33,25 @@ export function createTetrisEngine(): TetrisEngine {
   let dropAccum = 0;
   let paused = false;
   let mounted = false;
+  let currentSkin: GameSkinId = DEFAULT_GAME_SKIN;
 
   const stateListeners = new Set<(state: TetrisGameState) => void>();
+
+  function tokens() {
+    return TETRIS_SKINS[currentSkin];
+  }
+
+  function clearCanvas(
+    context: CanvasRenderingContext2D,
+    canvas: HTMLCanvasElement,
+  ): void {
+    const skin = tokens();
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    if (skin.background) {
+      context.fillStyle = skin.background;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }
   let play: TetrisPlayState = createInitialState();
 
   function currentState(): TetrisGameState {
@@ -53,7 +71,7 @@ export function createTetrisEngine(): TetrisEngine {
   }
 
   function drawGrid(context: CanvasRenderingContext2D): void {
-    context.strokeStyle = GRID_LINE;
+    context.strokeStyle = tokens().grid;
     context.lineWidth = 0.5;
     for (let c = 1; c < COLS; c++) {
       context.beginPath();
@@ -72,12 +90,13 @@ export function createTetrisEngine(): TetrisEngine {
   function drawBoard(): void {
     if (!ctx || !boardCanvas) return;
 
-    ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+    const skin = tokens();
+    clearCanvas(ctx, boardCanvas);
     drawGrid(ctx);
 
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
-        drawBlock(ctx, c, r, play.board[r][c], BLOCK);
+        drawBlock(ctx, c, r, play.board[r][c], BLOCK, skin);
       }
     }
 
@@ -92,7 +111,8 @@ export function createTetrisEngine(): TetrisEngine {
               gy + r,
               play.current.shape[r][c],
               BLOCK,
-              0.2,
+              skin,
+              skin.ghostAlpha,
             );
           }
         }
@@ -106,6 +126,7 @@ export function createTetrisEngine(): TetrisEngine {
             play.current.y + r,
             play.current.shape[r][c],
             BLOCK,
+            skin,
           );
         }
       }
@@ -115,13 +136,14 @@ export function createTetrisEngine(): TetrisEngine {
   function drawNext(): void {
     if (!nextCtx || !nextCanvas) return;
 
-    nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+    const skin = tokens();
+    clearCanvas(nextCtx, nextCanvas);
     const shape = play.next.shape;
     const offX = Math.floor((4 - shape[0].length) / 2);
     const offY = Math.floor((4 - shape.length) / 2);
     for (let r = 0; r < shape.length; r++) {
       for (let c = 0; c < shape[r].length; c++) {
-        drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NEXT_BLOCK);
+        drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NEXT_BLOCK, skin);
       }
     }
   }
@@ -293,6 +315,17 @@ export function createTetrisEngine(): TetrisEngine {
       return () => {
         stateListeners.delete(cb);
       };
+    },
+
+    setSkin(skin: GameSkinId): void {
+      currentSkin = skin;
+      if (mounted) {
+        draw();
+      }
+    },
+
+    getSkin(): GameSkinId {
+      return currentSkin;
     },
   };
 }
