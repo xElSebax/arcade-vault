@@ -9,7 +9,8 @@ This rule triggers the **game-jam** skill. Read `.claude/skills/game-jam/SKILL.m
 
 ## What this does
 
-- Takes a **theme** (e.g. `océano`, `neón`, `invierno`) as input
+- Takes a **theme** (e.g. `océano`, `neón`) or a **named game** (e.g. `Frogger`) as input
+- **Named game mode:** shared catalog `id` (e.g. `frogger`), files `01-{id}-{hook}.md`, `02-{id}-{hook}.md`; do not remap to placeholders unless asked
 - Proposes **≥2 gameplay variants** on the same theme with platform fit scores
 - Writes complete integration specs (same depth as `specs/07-tetris.md`) under `specs/game-jam/{folder-slug}/`
 - Maintains session memory in `references/game-jam/sessions-log.md`

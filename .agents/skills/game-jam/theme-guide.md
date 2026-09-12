@@ -65,20 +65,41 @@ Before presenting in Phase 2, verify each variant:
 | espacio | "Naves = Asteroids" | Duplica `asteroids` / placeholder `rocas` |
 | laberinto | "Fantasmas = Pac-Man" | Válido solo si hay twist; `gloton` es el placeholder natural |
 
-When a variant is close to a placeholder (`invasores`, `ranaria`, etc.), **note the mapping** in the spec Decisions section but use a **new id** unless the user explicitly asked to fill the placeholder.
+When a variant is close to a placeholder (`invasores`, `ranaria`, etc.), **note the mapping** in the spec Decisions section. If the user **named a specific game** (e.g. Frogger), use that game name as `id` — **do not** silently map to the placeholder (`ranaria` ≠ `frogger`). Only fill a placeholder when the user explicitly asks.
+
+---
+
+## Named game vs theme-only
+
+| | **Juego nombrado** | **Solo tema** |
+|---|-------------------|---------------|
+| Ejemplo input | "implementar Frogger", "juego Galaga" | "océano", "neón" |
+| Carpeta jam | `{game-id}/` — mismo que el juego | Nombre creativo (`tide-runner/`) |
+| `id` catálogo | **Uno compartido** en todas las variantes | Distinto por variante (default) |
+| Archivos spec | `01-{id}-{hook}.md`, `02-{id}-{hook}.md` | `{variant-slug}.md` o numerados |
+| Promoción | `specs/NN-{id}.md` (p. ej. `10-frogger.md`) | `specs/NN-{slug-elegido}.md` |
+
+**Ejemplo Frogger (juego nombrado):**
+
+| Archivo | `id` | Hook |
+|---------|------|------|
+| `01-frogger-classic.md` | `frogger` | Frogger clásico por niveles |
+| `02-frogger-log-rush.md` | `frogger` | Endless solo río |
+
+El placeholder `ranaria` permanece en `games.ts` hasta que un spec futuro lo sustituya o se decida fusionar catálogos.
 
 ---
 
 ## Folder and file naming
 
-| Elemento | Convención | Ejemplo |
-|----------|------------|---------|
-| Carpeta jam | `{folder-slug}/` — evoca el tema, no un slug de catálogo | `tide-runner/`, `neon-drift/` |
-| Archivo variante | `{catalog-slug}.md` o `{gameplay-hook}.md` | `reef-dodge.md`, `pearl-puzzle.md` |
-| Slug catálogo | kebab-case, único en `games.ts` | `reef-dodge`, `pearl-cascade` |
-| Título juego | MAYÚSCULAS en catálogo | `REEF DODGE`, `PEARL CASCADE` |
+| Elemento | Convención (solo tema) | Convención (juego nombrado) |
+|----------|------------------------|----------------------------|
+| Carpeta jam | Evoca el tema | `{game-id}/` (`frogger/`) |
+| Archivo variante | `{catalog-slug}.md` | `01-{id}-{hook}.md`, `02-{id}-{hook}.md` |
+| Slug catálogo | kebab-case, único por variante | **Mismo `id`** en todas las variantes |
+| Título juego | MAYÚSCULAS en catálogo | Nombre del juego (`FROGGER`) |
 
-Default: **one folder per jam session**, **distinct catalog slugs per variant**.
+Default (solo tema): **one folder per jam session**, **distinct catalog slugs per variant**.
 
 ---
 

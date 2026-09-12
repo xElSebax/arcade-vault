@@ -6,18 +6,33 @@ description: >-
   de spec completos listos para revisión. Use when brainstorming themed games
   or running a creative jam session. Does NOT write code or implement games.
 disable-model-invocation: true
-argument-hint: <tema del jam, ej. océano, neón, invierno>
+argument-hint: <tema del jam o juego concreto, ej. océano, Frogger, neón>
 ---
 
 # /game-jam — Themed game spec generator
 
-This skill turns a **creative theme** into **complete game integration specs** for Arcade Vault. **You do not write application code here.** Your job is to interpret the theme, propose gameplay variants, and save at least two full spec documents under `specs/game-jam/{slug}/` for human review.
+This skill turns a **creative theme** or a **named classic game** into **complete game integration specs** for Arcade Vault. **You do not write application code here.** Your job is to interpret the input, propose gameplay variants, and save at least two full spec documents under `specs/game-jam/{folder-slug}/` for human review.
 
 Read `theme-guide.md` (same directory) for variant design rules. Read `template.md` for the required spec structure. Reuse patterns from `@add-game` (SPEC 05 + SPEC 06).
 
 ## Philosophy
 
-`@game-planner` picks from known classics; `@add-game` writes one spec interactively. `@game-jam` is for **creative exploration**: a theme (e.g. "océano", "neón") becomes one jam folder with **≥2 independent, complete specs** — same template as `specs/07-tetris.md`, different gameplay angles on the same theme. The human picks a variant, promotes it to `specs/NN-{slug}.md`, and runs `@spec-impl`.
+`@game-planner` picks from known classics; `@add-game` writes one spec interactively. `@game-jam` is for **creative exploration**: a theme (e.g. "océano", "neón") or a **specific game request** (e.g. "Frogger") becomes one jam folder with **≥2 independent, complete specs** — same template as `specs/07-tetris.md`, different gameplay angles. The human picks a variant, promotes it to `specs/NN-{slug}.md`, and runs `@spec-impl`.
+
+## Input modes — detect before Phase 1
+
+| Modo | Señal en el prompt | `folder-slug` | `id` catálogo | Nombres de archivo |
+|------|-------------------|---------------|---------------|-------------------|
+| **Juego nombrado** | El usuario pide un juego concreto por nombre (p. ej. "Frogger", "implementar Galaga") | kebab-case del juego: `frogger` | **Mismo `id` en todas las variantes** (`frogger`) | `01-{id}-{hook}.md`, `02-{id}-{hook}.md`, … |
+| **Solo tema** | Tema abstracto sin juego concreto (p. ej. "océano", "neón") | Nombre creativo del jam: `tide-runner` | **Slug distinto por variante** (default) | `{variant-slug}.md` o `01-{slug}-{hook}.md` |
+
+**Reglas del modo juego nombrado:**
+
+- Usar el nombre del juego como `id` de catálogo y base de rutas (`/play/frogger`, `lib/games/frogger/`).
+- **No** sustituir por un placeholder del catálogo (p. ej. no usar `ranaria` si el usuario pidió Frogger) salvo petición explícita.
+- Las variantes difieren en **gameplay**, no en `id`; el humano elige una variante y promueve **un** spec a `specs/NN-{id}.md`.
+- Documentar en **Decisiones** la relación con placeholders cercanos (p. ej. `ranaria` queda intacto).
+- Título catálogo: nombre reconocible del juego en MAYÚSCULAS (`FROGGER`).
 
 ## Command flow
 
@@ -46,15 +61,19 @@ Before asking questions:
 
 If `$ARGUMENTS` is empty, ask the user for a theme before proceeding.
 
-### Phase 1 — Interpret the theme
+### Phase 1 — Interpret the theme or named game
 
-`$ARGUMENTS` = the jam theme (required).
+`$ARGUMENTS` = jam theme **or** named game (required).
+
+**If named game mode:** lock `folder-slug` and catalog `id` to the game name (kebab-case). Skip the "Catalog: new id or placeholder?" question unless the user contradicted the name. Variants share the same `id`.
+
+**If theme-only mode:** ask about catalog ids per variant as before.
 
 Ask in one block of 3–5 optional questions (wait for answers unless user wants fast mode):
 
 - **Category preference:** ARCADE, PUZZLE, SHOOTER, or open?
 - **Effort:** bajo (simple loop) | medio (levels/entities) | alto (flag if risky)?
-- **Catalog:** new `id` or fill an existing placeholder?
+- **Catalog:** *(solo modo tema)* new `id` per variant or fill placeholder? *(modo juego nombrado: ya fijado)*
 - **Reference:** port from `references/started-games/` or engine from scratch?
 - **Variant count:** default 2; user may request 3.
 
@@ -72,14 +91,17 @@ Present before writing any files:
 
 | # | Archivo | Slug catálogo | Género | Hook | Encaje | Riesgos |
 |---|---------|---------------|--------|------|--------|---------|
-| A | `{variant-a}.md` | `{slug-a}` | … | … | X/10 | … |
-| B | `{variant-b}.md` | `{slug-b}` | … | … | X/10 | … |
+| A | `01-{id}-{hook-a}.md` | `{id}` | … | … | X/10 | … |
+| B | `02-{id}-{hook-b}.md` | `{id}` | … | … | X/10 | … |
 ```
+
+En **modo juego nombrado**, `{id}` es el mismo en todas las filas (p. ej. `frogger`). En **modo solo tema**, cada fila puede tener `{slug}` distinto y archivos `{variant-slug}.md` o numerados.
 
 **Variant rules** (see `theme-guide.md`):
 
-- Same visual/narrative theme; **different gameplay** (e.g. action vs puzzle).
-- **Distinct catalog slugs** per variant (default) to avoid collision.
+- Same visual/narrative theme (or same named game); **different gameplay** (e.g. action vs puzzle).
+- **Named game:** one shared catalog `id`; files **must** use `01-{id}-{hook}.md`, `02-{id}-{hook}.md`, …
+- **Theme-only:** distinct catalog slugs per variant (default).
 - Each variant must score ≥6/10 on platform fit.
 - State a **primary recommendation** with one-line rationale.
 
@@ -99,11 +121,13 @@ After confirmation, write all files in one pass (no section-by-section confirmat
 
 ```
 specs/game-jam/{folder-slug}/
-  README.md                 # índice de sesión
-  {variant-a-slug}.md       # spec completo — variante A
-  {variant-b-slug}.md       # spec completo — variante B
-  {variant-c-slug}.md       # opcional si se acordó 3 variantes
+  README.md                      # índice de sesión
+  01-{id}-{hook-a}.md            # spec completo — variante A (obligatorio en modo juego nombrado)
+  02-{id}-{hook-b}.md            # spec completo — variante B
+  03-{id}-{hook-c}.md            # opcional si se acordó 3 variantes
 ```
+
+En modo solo tema, `{id}` puede ser el slug distinto de cada variante si no se usa numeración.
 
 **README.md** must include:
 
@@ -122,7 +146,7 @@ specs/game-jam/{folder-slug}/
 **Quality checks before saving:**
 
 - No duplicate of implemented games or near-clones without differentiation.
-- Placeholders left intact when creating new ids (do not modify placeholder entries).
+- Placeholders left intact when creating new ids (do not modify placeholder entries). In **named game mode**, add a **new** catalog entry with the game `id`; do not repurpose placeholders unless the user asked.
 - Both variants are independently implementable.
 - Cover CSS class names are unique and distinct from existing covers.
 

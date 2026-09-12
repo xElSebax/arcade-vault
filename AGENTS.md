@@ -78,11 +78,13 @@ supabase/migrations/                 # Seed del juego en tabla games
 
 ## Agente `@game-jam`
 
-Genera specs completos de juegos retro a partir de un **tema creativo**. Propone variantes de gameplay y escribe al menos 2 archivos de spec listos para revisión.
+Genera specs completos de juegos retro a partir de un **tema creativo** o un **juego nombrado** (p. ej. Frogger). Propone variantes de gameplay y escribe al menos 2 archivos de spec listos para revisión.
 
 | Aspecto | Detalle |
 |---------|---------|
-| Invocación | `@game-jam` o `/game-jam` · argumento: tema (p. ej. `océano`, `neón`) |
+| Invocación | `@game-jam` o `/game-jam` · argumento: tema (`océano`) o juego concreto (`Frogger`) |
+| Modo juego nombrado | Mismo `id` en todas las variantes (`frogger`); archivos `01-{id}-{hook}.md`, `02-{id}-{hook}.md`; carpeta `specs/game-jam/{id}/` |
+| Modo solo tema | Slugs de catálogo distintos por variante; carpeta con nombre creativo |
 | Skill | [`.claude/skills/game-jam/SKILL.md`](.claude/skills/game-jam/SKILL.md) |
 | Guía de temas | [`.claude/skills/game-jam/theme-guide.md`](.claude/skills/game-jam/theme-guide.md) |
 | Plantilla | [`.claude/skills/game-jam/template.md`](.claude/skills/game-jam/template.md) |

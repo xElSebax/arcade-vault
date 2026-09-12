@@ -17,14 +17,16 @@ Los specs generados por `@game-jam` viven en una subcarpeta por sesión:
 
 ```
 specs/game-jam/{folder-slug}/
-  README.md              # índice de la sesión (tema, variantes, recomendación)
-  {variant-a-slug}.md    # spec completo — variante A
-  {variant-b-slug}.md    # spec completo — variante B
+  README.md                    # índice de la sesión (tema, variantes, recomendación)
+  01-{id}-{hook-a}.md          # spec completo — variante A (obligatorio si el usuario nombró un juego)
+  02-{id}-{hook-b}.md          # spec completo — variante B
 ```
 
-- `{folder-slug}` = nombre de la carpeta jam (evoca el tema, kebab-case)
+- `{folder-slug}` = nombre de la carpeta jam (tema creativo **o** `id` del juego si el usuario pidió un clásico concreto, p. ej. `frogger/`)
+- **Juego nombrado:** mismo `id` de catálogo en todas las variantes; archivos numerados `01-{id}-…`, `02-{id}-…`
+- **Solo tema:** slugs de catálogo distintos por variante; archivos `{variant-slug}.md` o numerados
 - Cada variante es un **spec completo** (misma profundidad que `07-tetris.md`), con título `# JAM — …` y sin número `NN`
-- Mínimo **2 variantes** por sesión, con gameplay distinto sobre el mismo tema
+- Mínimo **2 variantes** por sesión, con gameplay distinto sobre el mismo tema o juego
 
 **Promoción a specs principales:** cuando el humano elige una variante:
 

@@ -327,8 +327,10 @@ Cada uno de estos, si llega, va en su propio spec.
 
 | Archivo | Slug catálogo | Género | Hook | Recomendación |
 |---------|---------------|--------|------|---------------|
-| `{variant-a}.md` | `{slug-a}` | … | … | ⭐ Principal |
-| `{variant-b}.md` | `{slug-b}` | … | … | Alternativa |
+| `01-{id}-{hook-a}.md` | `{id}` | … | … | ⭐ Principal |
+| `02-{id}-{hook-b}.md` | `{id}` | … | … | Alternativa |
+
+En modo **solo tema**, `{id}` puede variar por fila y los archivos pueden ser `{variant-slug}.md`.
 
 ## Próximos pasos
 
