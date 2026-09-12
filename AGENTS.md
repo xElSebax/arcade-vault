@@ -83,6 +83,7 @@ Genera specs completos de juegos retro a partir de un **tema creativo** o un **j
 | Aspecto | Detalle |
 |---------|---------|
 | Invocación | `@game-jam` o `/game-jam` · argumento: tema (`océano`) o juego concreto (`Frogger`) |
+| Subagente (contexto limpio) | [`.cursor/agents/game-jam.md`](.cursor/agents/game-jam.md) — delegar cuando el usuario pida explícitamente el agente `@game-jam` |
 | Modo juego nombrado | Mismo `id` en todas las variantes (`frogger`); archivos `01-{id}-{hook}.md`, `02-{id}-{hook}.md`; carpeta `specs/game-jam/{id}/` |
 | Modo solo tema | Slugs de catálogo distintos por variante; carpeta con nombre creativo |
 | Skill | [`.claude/skills/game-jam/SKILL.md`](.claude/skills/game-jam/SKILL.md) |
@@ -105,6 +106,7 @@ Evalúa qué juegos retro canvas encajan en Arcade Vault **antes** de escribir u
 | Aspecto | Detalle |
 |---------|---------|
 | Invocación | `@game-planner` o `/game-planner` · argumento opcional: criterios (p. ej. `shooter bajo esfuerzo`) |
+| Subagente (contexto limpio) | [`.cursor/agents/game-planner.md`](.cursor/agents/game-planner.md) — delegar cuando el usuario pida explícitamente el agente `@game-planner` |
 | Skill | [`.claude/skills/game-planner/SKILL.md`](.claude/skills/game-planner/SKILL.md) |
 | Criterios | [`.claude/skills/game-planner/criteria.md`](.claude/skills/game-planner/criteria.md) |
 | Memoria | [`references/game-planner/suggestions-log.md`](references/game-planner/suggestions-log.md) — log versionado en git |
