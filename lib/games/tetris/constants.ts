@@ -7,19 +7,6 @@ export const ROWS = 20;
 /** Cell size in pixels (main board canvas: COLS×BLOCK × ROWS×BLOCK = 300×600). */
 export const BLOCK = 30;
 
-/** Piece color palette indexed 1–8; index 0 unused. */
-export const COLORS: (string | null)[] = [
-  null,
-  "#4dd0e1", // I — cyan
-  "#ffd54f", // O — yellow
-  "#ba68c8", // T — purple
-  "#81c784", // S — green
-  "#e57373", // Z — red
-  "#90caf9", // J — pale blue
-  "#ffb74d", // L — orange
-  "#9e9e9e", // N — tuerca (gris metálico)
-];
-
 /** Piece shapes indexed 1–8; index 0 unused. */
 export const PIECES: (number[][] | null)[] = [
   null,

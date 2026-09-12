@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { BLOCK, COLS, ROWS } from "@/lib/games/tetris/constants";
 import { createTetrisEngine } from "@/lib/games/tetris/engine";
 import type { TetrisEngine, TetrisGameState } from "@/lib/games/tetris/types";
+import type { GameSkinId } from "@/lib/games/skins/types";
 
 const BOARD_WIDTH = COLS * BLOCK;
 const BOARD_HEIGHT = ROWS * BLOCK;
@@ -11,12 +12,14 @@ const NEXT_SIZE = 120;
 
 interface TetrisCanvasProps {
   paused: boolean;
+  skin: GameSkinId;
   onStateChange: (state: TetrisGameState) => void;
   engineRef: React.MutableRefObject<TetrisEngine | null>;
 }
 
 export function TetrisCanvas({
   paused,
+  skin,
   onStateChange,
   engineRef,
 }: TetrisCanvasProps) {
@@ -62,6 +65,12 @@ export function TetrisCanvas({
       engine.resume();
     }
   }, [paused]);
+
+  useEffect(() => {
+    const engine = engineInstanceRef.current;
+    if (!engine) return;
+    engine.setSkin(skin);
+  }, [skin]);
 
   return (
     <div className="tetris-canvas-wrap">

@@ -7,6 +7,7 @@ import { GamePlayerShell } from "@/components/game-player-shell";
 import { AsteroidsCanvas } from "@/components/games/asteroids-canvas";
 import { useAuth } from "@/components/providers/auth-provider";
 import type { AsteroidsEngine, AsteroidsGameState } from "@/lib/games/asteroids/types";
+import { useGameSkin } from "@/lib/player-skin";
 import { usePlayerName, writePlayerName } from "@/lib/player-name";
 
 interface AsteroidsPlayerProps {
@@ -16,6 +17,7 @@ interface AsteroidsPlayerProps {
 export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
+  const [skin, setSkin] = useGameSkin(game.id);
   const engineRef = useRef<AsteroidsEngine | null>(null);
 
   const [score, setScore] = useState(0);
@@ -95,6 +97,8 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
       paused={paused}
       over={over}
       saved={saved}
+      skin={skin}
+      onSkinChange={setSkin}
       onTogglePause={() => setPaused((p) => !p)}
       onEndGame={endGame}
       onRestart={restart}
@@ -104,6 +108,7 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
       arena={
         <AsteroidsCanvas
           paused={paused || over}
+          skin={skin}
           onStateChange={handleStateChange}
           engineRef={engineRef}
         />

@@ -1,3 +1,5 @@
+import type { GameSkinId } from "@/lib/games/skins/types";
+
 export type SnakePhase = "playing" | "gameover";
 
 export interface SnakeGameState {
@@ -14,4 +16,6 @@ export interface SnakeEngine {
   resume(): void;
   reset(): void;
   onStateChange(cb: (state: SnakeGameState) => void): () => void;
+  setSkin(skin: GameSkinId): void;
+  getSkin(): GameSkinId;
 }

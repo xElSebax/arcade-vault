@@ -1,4 +1,5 @@
 import { H, TRIPLE_SPREAD, W } from "../constants";
+import type { AsteroidsSkinTokens } from "../skins";
 import { rand, wrap } from "../utils";
 import { Bullet } from "./bullet";
 
@@ -94,31 +95,47 @@ export class Ship {
     return [new Bullet(ox, oy, this.angle)];
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
     if (this.dead) return;
     if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0) return;
 
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = tokens.ship;
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
 
-    ctx.beginPath();
-    ctx.moveTo(20, 0);
-    ctx.lineTo(-12, -9);
-    ctx.lineTo(-7, 0);
-    ctx.lineTo(-12, 9);
-    ctx.closePath();
-    ctx.stroke();
+    const strokeShip = (): void => {
+      ctx.beginPath();
+      ctx.moveTo(20, 0);
+      ctx.lineTo(-12, -9);
+      ctx.lineTo(-7, 0);
+      ctx.lineTo(-12, 9);
+      ctx.closePath();
+      ctx.stroke();
+    };
+
+    if (tokens.glowBlur) {
+      ctx.shadowBlur = tokens.glowBlur;
+      ctx.shadowColor = tokens.ship;
+      strokeShip();
+      ctx.shadowBlur = 0;
+      strokeShip();
+    } else {
+      strokeShip();
+    }
 
     if (this.thrusting && Math.random() > 0.35) {
+      ctx.strokeStyle = tokens.shipThrust;
       ctx.beginPath();
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+      if (tokens.glowBlur) {
+        ctx.shadowBlur = tokens.glowBlur * 0.6;
+        ctx.shadowColor = tokens.shipThrust;
+      }
       ctx.stroke();
     }
 

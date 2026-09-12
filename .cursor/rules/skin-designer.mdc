@@ -1,0 +1,47 @@
+---
+description: Applies classic/retro/neon canvas skins to one Arcade Vault game at a time. Maintains references/skin-designer/game-with-themes.md. Use with @skin-designer {slug}.
+alwaysApply: false
+---
+
+# /skin-designer — Per-game canvas skin implementation
+
+This rule triggers the **skin-designer** skill. Read `.claude/skills/skin-designer/SKILL.md` and follow it strictly.
+
+## What this does
+
+- Takes a **game slug** (e.g. `asteroids`, `tetris`) — **one game per session**
+- Implements three skins: **classic** (default), **retro**, **neon** — all readable on dark CRT canvas
+- Creates shared skin infra (`types`, `player-skin`, selector) **only if missing**
+- Updates inventory in `references/skin-designer/game-with-themes.md`
+
+## What this does NOT do
+
+- Apply skins to all playables in one go
+- Mark specs as `Aprobado`
+- Skin placeholders until integrated (unless explicitly requested)
+
+## Supporting files
+
+- `.claude/skills/skin-designer/SKILL.md` — five-phase workflow and hard rules
+- `.claude/skills/skin-designer/palette-guide.md` — classic / retro / neon definitions
+- `.claude/skills/skin-designer/dark-mode-checklist.md` — contrast and verification
+- `references/skin-designer/game-with-themes.md` — skin coverage inventory (read at start, update at end)
+
+## Workflow summary
+
+1. **Context** — read `game-with-themes.md`, target engine, palette guide
+2. **Confirm game** — single slug from argument or user prompt
+3. **Tokens** — `lib/games/{slug}/skins.ts`; classic = current colors
+4. **Implement** — engine + React wiring + shared UI if needed
+5. **Persist** — update game row + append session in `game-with-themes.md`, then **STOP**
+
+## Subagent
+
+For a clean context, delegate to [`.cursor/agents/skin-designer.md`](.cursor/agents/skin-designer.md) when the user explicitly asks for the `@skin-designer` subagent.
+
+## Example invocations
+
+```
+@skin-designer snake
+@skin-designer audit
+```

@@ -1,4 +1,8 @@
 import {
+  DEFAULT_GAME_SKIN,
+  type GameSkinId,
+} from "@/lib/games/skins/types";
+import {
   H,
   MAX_DT,
   POINTS,
@@ -11,6 +15,7 @@ import { Bullet } from "./entities/bullet";
 import { Particle } from "./entities/particle";
 import { PowerUp } from "./entities/power-up";
 import { Ship } from "./entities/ship";
+import { ASTEROIDS_SKINS } from "./skins";
 import type {
   AsteroidsEngine,
   AsteroidsGameState,
@@ -51,6 +56,11 @@ export function createAsteroidsEngine(): AsteroidsEngine {
   let deadTimer = 0;
   let powerUpSpawned = false;
   let killsSinceSpawn = 0;
+  let currentSkin: GameSkinId = DEFAULT_GAME_SKIN;
+
+  function tokens() {
+    return ASTEROIDS_SKINS[currentSkin];
+  }
 
   function currentState(): AsteroidsGameState {
     return { score, lives, level, phase };
@@ -237,12 +247,12 @@ export function createAsteroidsEngine(): AsteroidsEngine {
     }
   }
 
-  function drawLifeIcon(x: number, y: number): void {
+  function drawLifeIcon(x: number, y: number, color: string): void {
     if (!ctx) return;
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(-Math.PI / 2);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = color;
     ctx.lineWidth = 1.2;
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -255,10 +265,35 @@ export function createAsteroidsEngine(): AsteroidsEngine {
     ctx.restore();
   }
 
-  function drawHUD(): void {
+  function drawGrid(
+    context: CanvasRenderingContext2D,
+    skinTokens: ReturnType<typeof tokens>,
+  ): void {
+    if (!skinTokens.grid) return;
+
+    const step = 40;
+    context.save();
+    context.strokeStyle = skinTokens.grid;
+    context.lineWidth = skinTokens.gridLineWidth ?? 1;
+    for (let x = 0; x <= W; x += step) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, H);
+      context.stroke();
+    }
+    for (let y = 0; y <= H; y += step) {
+      context.beginPath();
+      context.moveTo(0, y);
+      context.lineTo(W, y);
+      context.stroke();
+    }
+    context.restore();
+  }
+
+  function drawHUD(skinTokens: ReturnType<typeof tokens>): void {
     if (!ctx) return;
 
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = skinTokens.hud;
     ctx.font = "15px monospace";
 
     ctx.textAlign = "left";
@@ -268,12 +303,12 @@ export function createAsteroidsEngine(): AsteroidsEngine {
     ctx.fillText(`NIVEL ${level}`, W / 2, 26);
 
     for (let i = 0; i < lives; i++) {
-      drawLifeIcon(W - 16 - i * 22, 18);
+      drawLifeIcon(W - 16 - i * 22, 18, skinTokens.lifeIcon);
     }
 
     if (ship.tripleShot > 0) {
       ctx.textAlign = "left";
-      ctx.fillStyle = "#0ff";
+      ctx.fillStyle = skinTokens.hudTripleShot;
       ctx.fillText(`3x  ${ship.tripleShot.toFixed(1)}s`, 14, 46);
     }
   }
@@ -281,17 +316,20 @@ export function createAsteroidsEngine(): AsteroidsEngine {
   function draw(): void {
     if (!ctx) return;
     const context = ctx;
+    const skinTokens = tokens();
 
-    context.fillStyle = "#000";
+    context.fillStyle = skinTokens.background;
     context.fillRect(0, 0, W, H);
 
-    particles.forEach((p) => p.draw(context));
-    asteroids.forEach((a) => a.draw(context));
-    powerUps.forEach((p) => p.draw(context));
-    bullets.forEach((b) => b.draw(context));
-    ship.draw(context);
+    drawGrid(context, skinTokens);
 
-    drawHUD();
+    particles.forEach((p) => p.draw(context, skinTokens));
+    asteroids.forEach((a) => a.draw(context, skinTokens));
+    powerUps.forEach((p) => p.draw(context, skinTokens));
+    bullets.forEach((b) => b.draw(context, skinTokens));
+    ship.draw(context, skinTokens);
+
+    drawHUD(skinTokens);
   }
 
   function loop(ts: number): void {
@@ -386,6 +424,17 @@ export function createAsteroidsEngine(): AsteroidsEngine {
       return () => {
         stateListeners.delete(cb);
       };
+    },
+
+    setSkin(skin: GameSkinId): void {
+      currentSkin = skin;
+      if (mounted && !paused) {
+        draw();
+      }
+    },
+
+    getSkin(): GameSkinId {
+      return currentSkin;
     },
   };
 }

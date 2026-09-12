@@ -1,4 +1,5 @@
 import { RADII, SPEEDS, H, W } from "../constants";
+import type { AsteroidsSkinTokens } from "../skins";
 import { rand, randInt, wrap } from "../utils";
 
 export type AsteroidSize = 1 | 2 | 3;
@@ -53,20 +54,34 @@ export class Asteroid {
     ];
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rot);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = tokens.asteroid;
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
-    ctx.beginPath();
-    ctx.moveTo(this.verts[0][0], this.verts[0][1]);
-    for (let i = 1; i < this.verts.length; i++) {
-      ctx.lineTo(this.verts[i][0], this.verts[i][1]);
+
+    const strokeAsteroid = (): void => {
+      ctx.beginPath();
+      ctx.moveTo(this.verts[0][0], this.verts[0][1]);
+      for (let i = 1; i < this.verts.length; i++) {
+        ctx.lineTo(this.verts[i][0], this.verts[i][1]);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    };
+
+    if (tokens.glowBlur) {
+      ctx.shadowBlur = tokens.glowBlur;
+      ctx.shadowColor = tokens.asteroid;
+      strokeAsteroid();
+      ctx.shadowBlur = 0;
+      strokeAsteroid();
+    } else {
+      strokeAsteroid();
     }
-    ctx.closePath();
-    ctx.stroke();
+
     ctx.restore();
   }
 }

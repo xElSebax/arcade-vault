@@ -1,3 +1,5 @@
+import type { GameSkinId } from "@/lib/games/skins/types";
+
 export type ArkanoidPhase = "playing" | "gameover" | "win";
 
 export type BlockColor =
@@ -22,5 +24,7 @@ export interface ArkanoidEngine {
   pause(): void;
   resume(): void;
   reset(): void;
+  setSkin(skin: GameSkinId): void;
+  getSkin(): GameSkinId;
   onStateChange(cb: (state: ArkanoidGameState) => void): () => void;
 }

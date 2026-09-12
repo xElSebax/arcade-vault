@@ -7,15 +7,18 @@ import type {
   ArkanoidEngine,
   ArkanoidGameState,
 } from "@/lib/games/arkanoid/types";
+import type { GameSkinId } from "@/lib/games/skins/types";
 
 interface ArkanoidCanvasProps {
   paused: boolean;
+  skin: GameSkinId;
   onStateChange: (state: ArkanoidGameState) => void;
   engineRef: React.MutableRefObject<ArkanoidEngine | null>;
 }
 
 export function ArkanoidCanvas({
   paused,
+  skin,
   onStateChange,
   engineRef,
 }: ArkanoidCanvasProps) {
@@ -59,6 +62,12 @@ export function ArkanoidCanvas({
       engine.resume();
     }
   }, [paused]);
+
+  useEffect(() => {
+    const engine = engineInstanceRef.current;
+    if (!engine) return;
+    engine.setSkin(skin);
+  }, [skin]);
 
   return (
     <div className="arkanoid-canvas-wrap">

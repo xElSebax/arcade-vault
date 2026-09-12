@@ -1,5 +1,11 @@
 import {
+  BLOCK_COLS,
+  BLOCK_H,
+  BLOCK_ROWS,
   BLOCK_SCORE,
+  BLOCKS_ORIGIN_X,
+  BLOCKS_ORIGIN_Y,
+  BLOCK_W,
   EXPLOSION_DURATION,
   H,
   MAX_DT,
@@ -22,6 +28,11 @@ import {
   type Paddle,
 } from "./entities/paddle";
 import { LEVELS } from "./levels";
+import { ARKANOID_SKINS } from "./skins";
+import {
+  DEFAULT_GAME_SKIN,
+  type GameSkinId,
+} from "@/lib/games/skins/types";
 import {
   disposeSounds,
   loadSounds,
@@ -39,7 +50,9 @@ import type {
   ArkanoidEngine,
   ArkanoidGameState,
   ArkanoidPhase,
+  BlockColor,
 } from "./types";
+import type { ArkanoidSkinTokens } from "./skins";
 import { clamp, collideAABB } from "./utils";
 
 export function createArkanoidEngine(): ArkanoidEngine {
@@ -62,6 +75,53 @@ export function createArkanoidEngine(): ArkanoidEngine {
   let lives = STARTING_LIVES;
   let level = 1;
   let phase: ArkanoidPhase = "playing";
+  let currentSkin: GameSkinId = DEFAULT_GAME_SKIN;
+
+  function tokens() {
+    return ARKANOID_SKINS[currentSkin];
+  }
+
+  function drawGrid(
+    context: CanvasRenderingContext2D,
+    color: string,
+    alpha = 0.35,
+  ): void {
+    context.strokeStyle = color;
+    context.lineWidth = 1;
+    context.globalAlpha = alpha;
+
+    for (let col = 0; col <= BLOCK_COLS; col++) {
+      const x = BLOCKS_ORIGIN_X + col * BLOCK_W;
+      context.beginPath();
+      context.moveTo(x, BLOCKS_ORIGIN_Y);
+      context.lineTo(x, BLOCKS_ORIGIN_Y + BLOCK_ROWS * BLOCK_H);
+      context.stroke();
+    }
+
+    for (let row = 0; row <= BLOCK_ROWS; row++) {
+      const y = BLOCKS_ORIGIN_Y + row * BLOCK_H;
+      context.beginPath();
+      context.moveTo(BLOCKS_ORIGIN_X, y);
+      context.lineTo(BLOCKS_ORIGIN_X + BLOCK_COLS * BLOCK_W, y);
+      context.stroke();
+    }
+
+    context.globalAlpha = 1;
+  }
+
+  function drawScanlines(
+    context: CanvasRenderingContext2D,
+    alpha: number,
+  ): void {
+    context.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+    for (let y = 0; y < H; y += 2) {
+      context.fillRect(0, y, W, 1);
+    }
+  }
+
+  function blockFilter(tokens: ArkanoidSkinTokens, color: BlockColor): string {
+    return tokens.blockFilters?.[color] ?? tokens.spriteFilter;
+  }
 
   function currentState(): ArkanoidGameState {
     return { score, lives, level, phase };
@@ -204,9 +264,14 @@ export function createArkanoidEngine(): ArkanoidEngine {
   function draw(): void {
     if (!ctx || !isSpritesheetReady()) return;
     const context = ctx;
+    const t = tokens();
 
-    context.fillStyle = "#000";
+    context.fillStyle = t.background;
     context.fillRect(0, 0, W, H);
+
+    if (t.grid) {
+      drawGrid(context, t.grid, t.gridAlpha ?? 0.35);
+    }
 
     for (const block of blocks) {
       if (block.alive) {
@@ -217,6 +282,7 @@ export function createArkanoidEngine(): ArkanoidEngine {
           block.y,
           block.w,
           block.h,
+          { filter: blockFilter(t, block.color) },
         );
       }
     }
@@ -233,11 +299,45 @@ export function createArkanoidEngine(): ArkanoidEngine {
         exp.y,
         exp.w,
         exp.h,
+        {
+          filter: blockFilter(t, exp.color),
+          glowBlur: t.explosionGlowBlur,
+          glowColor:
+            t.explosionGlowColors?.[exp.color] ?? t.entityGlowColor,
+        },
       );
     }
 
-    drawSprite(context, "paddle", paddle.x, paddle.y, paddle.w, paddle.h);
-    drawSprite(context, "ball", ball.x, ball.y, ball.w, ball.h);
+    drawSprite(
+      context,
+      "paddle",
+      paddle.x,
+      paddle.y,
+      paddle.w,
+      paddle.h,
+      {
+        filter: t.spriteFilter,
+        glowBlur: t.paddleGlowBlur ?? t.entityGlowBlur,
+        glowColor: t.paddleGlowColor ?? t.entityGlowColor,
+      },
+    );
+    drawSprite(
+      context,
+      "ball",
+      ball.x,
+      ball.y,
+      ball.w,
+      ball.h,
+      {
+        filter: t.spriteFilter,
+        glowBlur: t.ballGlowBlur ?? t.entityGlowBlur,
+        glowColor: t.ballGlowColor ?? t.entityGlowColor,
+      },
+    );
+
+    if (t.scanlineAlpha) {
+      drawScanlines(context, t.scanlineAlpha);
+    }
   }
 
   function loop(ts: number): void {
@@ -349,6 +449,17 @@ export function createArkanoidEngine(): ArkanoidEngine {
       return () => {
         stateListeners.delete(cb);
       };
+    },
+
+    setSkin(skin: GameSkinId): void {
+      currentSkin = skin;
+      if (mounted && spritesReady) {
+        draw();
+      }
+    },
+
+    getSkin(): GameSkinId {
+      return currentSkin;
     },
   };
 }

@@ -102,6 +102,31 @@ export function loadSpritesheet(cb: () => void): void {
   rawImg.src = SPRITESHEET_PATH;
 }
 
+export interface SpriteDrawOptions {
+  filter?: string;
+  glowBlur?: number;
+  glowColor?: string;
+}
+
+function applySpriteDrawOptions(
+  ctx: CanvasRenderingContext2D,
+  options?: SpriteDrawOptions,
+): void {
+  if (options?.filter && options.filter !== "none") {
+    ctx.filter = options.filter;
+  }
+  if (options?.glowBlur) {
+    ctx.shadowBlur = options.glowBlur;
+    ctx.shadowColor = options.glowColor ?? "rgba(0, 245, 255, 0.85)";
+  }
+}
+
+function resetSpriteDrawOptions(ctx: CanvasRenderingContext2D): void {
+  ctx.filter = "none";
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = "transparent";
+}
+
 export function drawFrame(
   ctx: CanvasRenderingContext2D,
   frame: SpriteFrame,
@@ -109,8 +134,10 @@ export function drawFrame(
   y: number,
   w: number,
   h: number,
+  options?: SpriteDrawOptions,
 ): void {
   if (!ssLoaded || !ssCanvas) return;
+  applySpriteDrawOptions(ctx, options);
   ctx.drawImage(
     ssCanvas,
     frame.sx,
@@ -122,6 +149,7 @@ export function drawFrame(
     w,
     h,
   );
+  resetSpriteDrawOptions(ctx);
 }
 
 export function drawSprite(
@@ -131,6 +159,7 @@ export function drawSprite(
   y: number,
   w: number,
   h: number,
+  options?: SpriteDrawOptions,
 ): void {
   if (!ssLoaded || !ssCanvas) return;
 
@@ -143,5 +172,7 @@ export function drawSprite(
   }
 
   if (!sp) return;
+  applySpriteDrawOptions(ctx, options);
   ctx.drawImage(ssCanvas, sp.sx, sp.sy, sp.sw, sp.sh, x, y, w, h);
+  resetSpriteDrawOptions(ctx);
 }

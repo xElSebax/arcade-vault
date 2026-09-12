@@ -7,15 +7,18 @@ import type {
   AsteroidsEngine,
   AsteroidsGameState,
 } from "@/lib/games/asteroids/types";
+import type { GameSkinId } from "@/lib/games/skins/types";
 
 interface AsteroidsCanvasProps {
   paused: boolean;
+  skin: GameSkinId;
   onStateChange: (state: AsteroidsGameState) => void;
   engineRef: React.MutableRefObject<AsteroidsEngine | null>;
 }
 
 export function AsteroidsCanvas({
   paused,
+  skin,
   onStateChange,
   engineRef,
 }: AsteroidsCanvasProps) {
@@ -59,6 +62,12 @@ export function AsteroidsCanvas({
       engine.resume();
     }
   }, [paused]);
+
+  useEffect(() => {
+    const engine = engineInstanceRef.current;
+    if (!engine) return;
+    engine.setSkin(skin);
+  }, [skin]);
 
   return (
     <div className="asteroids-canvas-wrap">

@@ -64,6 +64,80 @@ supabase/migrations/                 # Seed del juego en tabla games
 
 **Referencias de port:** prototipos vanilla en `references/started-games/` (p. ej. `02-asteroids`, `03-tetris`, `04-arkanoid`).
 
+**Pipeline de integración (clásico):**
+
+```
+@game-planner → elegir juego → @add-game {slug} → Aprobado → @spec-impl NN-slug
+```
+
+**Pipeline creativo (game jam):**
+
+```
+@game-jam {tema} → revisar variantes en specs/game-jam/{slug}/ → elegir una → promover a specs/NN-{slug}.md → Aprobado → @spec-impl NN-slug
+```
+
+## Agente `@game-jam`
+
+Genera specs completos de juegos retro a partir de un **tema creativo** o un **juego nombrado** (p. ej. Frogger). Propone variantes de gameplay y escribe al menos 2 archivos de spec listos para revisión.
+
+| Aspecto | Detalle |
+|---------|---------|
+| Invocación | `@game-jam` o `/game-jam` · argumento: tema (`océano`) o juego concreto (`Frogger`) |
+| Subagente (contexto limpio) | [`.cursor/agents/game-jam.md`](.cursor/agents/game-jam.md) — delegar cuando el usuario pida explícitamente el agente `@game-jam` |
+| Modo juego nombrado | Mismo `id` en todas las variantes (`frogger`); archivos `01-{id}-{hook}.md`, `02-{id}-{hook}.md`; carpeta `specs/game-jam/{id}/` |
+| Modo solo tema | Slugs de catálogo distintos por variante; carpeta con nombre creativo |
+| Skill | [`.claude/skills/game-jam/SKILL.md`](.claude/skills/game-jam/SKILL.md) |
+| Guía de temas | [`.claude/skills/game-jam/theme-guide.md`](.claude/skills/game-jam/theme-guide.md) |
+| Plantilla | [`.claude/skills/game-jam/template.md`](.claude/skills/game-jam/template.md) |
+| Memoria | [`references/game-jam/sessions-log.md`](references/game-jam/sessions-log.md) — log versionado en git |
+| Regla Cursor | [`.cursor/rules/game-jam.mdc`](.cursor/rules/game-jam.mdc) |
+| Salida | `specs/game-jam/{folder-slug}/` con `README.md` + ≥2 specs completos |
+
+**Qué hace:** interpreta el tema, propone ≥2 variantes con encaje distinto, escribe specs al nivel de `specs/07-tetris.md` tras confirmación del usuario; registra la sesión en el log.
+
+**Qué no hace:** no escribe código, migraciones ni branches. No marca specs como `Aprobado`. Tras elegir variante, el humano promueve el archivo a `specs/NN-{slug}.md` y ejecuta `@spec-impl`.
+
+**Estados en el log:** `generado` · `elegido` · `promovido` · `descartado`
+
+## Agente `@game-planner`
+
+Evalúa qué juegos retro canvas encajan en Arcade Vault **antes** de escribir un spec. Piensa, rankea candidatos y mantiene memoria de lo ya sugerido.
+
+| Aspecto | Detalle |
+|---------|---------|
+| Invocación | `@game-planner` o `/game-planner` · argumento opcional: criterios (p. ej. `shooter bajo esfuerzo`) |
+| Subagente (contexto limpio) | [`.cursor/agents/game-planner.md`](.cursor/agents/game-planner.md) — delegar cuando el usuario pida explícitamente el agente `@game-planner` |
+| Skill | [`.claude/skills/game-planner/SKILL.md`](.claude/skills/game-planner/SKILL.md) |
+| Criterios | [`.claude/skills/game-planner/criteria.md`](.claude/skills/game-planner/criteria.md) |
+| Memoria | [`references/game-planner/suggestions-log.md`](references/game-planner/suggestions-log.md) — log versionado en git |
+| Regla Cursor | [`.cursor/rules/game-planner.mdc`](.cursor/rules/game-planner.mdc) |
+
+**Qué hace:** lee catálogo, placeholders, prototipos y el log de sugerencias; propone 3–5 candidatos con puntuación de encaje (1–10); registra cada sesión en el log.
+
+**Qué no hace:** no escribe specs, código, migraciones ni branches. Si el usuario elige un juego, hace handoff a `@add-game {slug}`.
+
+**Estados en el log:** `sugerido` · `descartado` · `en_spec` · `implementado` · `revisitado`
+
+## Agente `@skin-designer`
+
+Configura los tres skins visuales (**classic**, **retro**, **neon**) para **un juego jugable a la vez**. Mantiene el inventario en `references/skin-designer/game-with-themes.md`.
+
+| Aspecto | Detalle |
+|---------|---------|
+| Invocación | `@skin-designer` o `/skin-designer` · argumento: slug del juego (`asteroids`, `tetris`, `arkanoid`, `snake`) |
+| Subagente (contexto limpio) | [`.cursor/agents/skin-designer.md`](.cursor/agents/skin-designer.md) — delegar cuando el usuario pida explícitamente el agente `@skin-designer` |
+| Skill | [`.claude/skills/skin-designer/SKILL.md`](.claude/skills/skin-designer/SKILL.md) |
+| Paletas | [`.claude/skills/skin-designer/palette-guide.md`](.claude/skills/skin-designer/palette-guide.md) |
+| Checklist dark mode | [`.claude/skills/skin-designer/dark-mode-checklist.md`](.claude/skills/skin-designer/dark-mode-checklist.md) |
+| Memoria | [`references/skin-designer/game-with-themes.md`](references/skin-designer/game-with-themes.md) — inventario versionado en git |
+| Regla Cursor | [`.cursor/rules/skin-designer.mdc`](.cursor/rules/skin-designer.mdc) |
+
+**Qué hace:** lee el inventario, confirma un solo juego por sesión, define tokens en `lib/games/{slug}/skins.ts`, implementa classic/retro/neon en el engine y wiring React, verifica contraste en fondo oscuro del CRT, actualiza la fila del juego en `game-with-themes.md`.
+
+**Qué no hace:** no aplica skins a todos los jugables de golpe; no marca specs como `Aprobado`; no toca placeholders salvo petición explícita.
+
+**Estados por skin en el inventario:** `pendiente` · `en_progreso` · `completo`
+
 ## Skills
 
 Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar con `/` en Claude Code o `@` en Cursor.
@@ -71,13 +145,18 @@ Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar 
 | Skill / regla | Uso |
 |---------------|-----|
 | `/frontend-design` | Diseñar la interfaz de usuario (estética retro CRT, tokens en `app/arcade-vault.css`). |
+| `@game-planner` | Evaluar qué juego retro encaja en la plataforma; mantener memoria en `references/game-planner/suggestions-log.md`. **No escribe specs** — handoff a `@add-game`. |
+| `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/`. **No implementa código** — promover variante elegida a `specs/NN-{slug}.md` antes de `@spec-impl`. |
+| `@skin-designer` | Aplicar skins classic/retro/neon a **un juego a la vez**; memoria en `references/skin-designer/game-with-themes.md`. |
 | `@spec` | Diseñar un spec genérico antes de escribir código. |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard). **Extiende `@spec`** — lee primero `/spec`, luego aplica patrones de SPEC 05 y SPEC 06. **No implementa código** — solo produce `specs/NN-slug.md` en `Borrador`. |
 | `@spec-impl` | Implementar un spec en estado `Aprobado`. |
 
 Usa siempre `/frontend-design` para diseñar la interfaz de usuario.
 
-Para integrar un juego nuevo: `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug`.
+Para integrar un juego clásico: `@game-planner` → elegir juego → `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug`.
+
+Para un juego temático: `@game-jam {tema}` → revisar variantes → promover a `specs/NN-{slug}.md` → `Aprobado` → `@spec-impl NN-slug`.
 
 ## Estructura del proyecto
 
@@ -109,13 +188,17 @@ lib/
 public/games/             # Assets estáticos por juego (sprites, sonidos)
 supabase/migrations/      # SQL: games, scores, seeds, RLS
 specs/                    # Specs de diseño (spec-driven development)
+  game-jam/               # Specs temáticos con variantes (@game-jam)
 references/
   implemented-games.md    # Inventario de juegos (jugables + placeholders)
+  game-planner/           # Memoria de sugerencias (@game-planner)
+  game-jam/               # Memoria de sesiones jam (@game-jam)
+  skin-designer/          # Inventario de skins por juego (@skin-designer)
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
   source-assets/          # Assets fuente
-.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, nextjs)
-.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, frontend-design)
+.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, @game-planner, @game-jam, @skin-designer, nextjs)
+.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, game-planner, game-jam, skin-designer, frontend-design)
 ```
 
 Alias de importación: `@/*` apunta a la raíz del proyecto.
@@ -188,9 +271,27 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 
 ### Ciclo de trabajo
 
+**Features genéricas:**
+
 1. **`@spec`** — Diseña un spec haciendo preguntas clarificadoras. Guarda en `specs/NN-slug.md` con estado `Borrador`.
 2. **Revisión humana** — El humano relee el spec fuera del chat y cambia el estado a `Aprobado` manualmente.
 3. **`@spec-impl`** — Valida que el estado sea `Aprobado`, crea la rama `spec-NN-slug` y implementa paso a paso con pausas para revisar diffs.
+
+**Integración de un juego nuevo (clásico):**
+
+1. **`@game-planner`** — Evalúa encaje, propone candidatos y persiste la sesión en `references/game-planner/suggestions-log.md`.
+2. **Elección humana** — Se elige el juego a integrar.
+3. **`@add-game {slug}`** — Genera `specs/NN-slug.md` en `Borrador` (extiende `@spec` con patrones SPEC 05 + 06).
+4. **Revisión humana** — Cambiar estado a `Aprobado`.
+5. **`@spec-impl NN-slug`** — Implementación paso a paso.
+
+**Integración creativa (game jam):**
+
+1. **`@game-jam {tema}`** — Propone variantes y escribe specs en `specs/game-jam/{folder-slug}/`.
+2. **Elección humana** — Se elige una variante.
+3. **Promoción** — Copiar spec elegido a `specs/NN-{slug}.md` (asignar siguiente `NN`).
+4. **Revisión humana** — Cambiar estado a `Aprobado`.
+5. **`@spec-impl NN-slug`** — Implementación paso a paso.
 
 Configuración en `specs/.spec-config.yml` (`AutoCreateBranch: true` crea la rama automáticamente).
 
@@ -219,6 +320,9 @@ Invocar con `@` en el chat:
 
 | Regla | Uso |
 |-------|-----|
+| `@game-planner` | Evaluar qué juego retro encaja; memoria en `references/game-planner/suggestions-log.md` |
+| `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/` |
+| `@skin-designer` | Skins classic/retro/neon por juego; inventario en `references/skin-designer/game-with-themes.md` |
 | `@spec` | Diseñar un spec antes de escribir código |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard) |
 | `@spec-impl` | Implementar un spec aprobado |

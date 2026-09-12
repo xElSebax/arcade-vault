@@ -7,6 +7,7 @@ import { GamePlayerShell } from "@/components/game-player-shell";
 import { SnakeCanvas } from "@/components/games/snake-canvas";
 import { useAuth } from "@/components/providers/auth-provider";
 import type { SnakeEngine, SnakeGameState } from "@/lib/games/snake/types";
+import { useGameSkin } from "@/lib/player-skin";
 import { usePlayerName, writePlayerName } from "@/lib/player-name";
 
 interface SnakePlayerProps {
@@ -16,6 +17,7 @@ interface SnakePlayerProps {
 export function SnakePlayer({ game }: SnakePlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
+  const [skin, setSkin] = useGameSkin(game.id);
   const engineRef = useRef<SnakeEngine | null>(null);
 
   const [score, setScore] = useState(0);
@@ -95,6 +97,8 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
       paused={paused}
       over={over}
       saved={saved}
+      skin={skin}
+      onSkinChange={setSkin}
       onTogglePause={() => setPaused((p) => !p)}
       onEndGame={endGame}
       onRestart={restart}
@@ -104,6 +108,7 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
       arena={
         <SnakeCanvas
           paused={paused || over}
+          skin={skin}
           onStateChange={handleStateChange}
           engineRef={engineRef}
         />

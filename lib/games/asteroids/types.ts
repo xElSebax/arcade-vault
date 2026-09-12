@@ -1,3 +1,5 @@
+import type { GameSkinId } from "@/lib/games/skins/types";
+
 export type AsteroidsPhase = "playing" | "dead" | "gameover";
 
 export interface AsteroidsGameState {
@@ -13,5 +15,7 @@ export interface AsteroidsEngine {
   pause(): void;
   resume(): void;
   reset(): void;
+  setSkin(skin: GameSkinId): void;
+  getSkin(): GameSkinId;
   onStateChange(cb: (state: AsteroidsGameState) => void): () => void;
 }
