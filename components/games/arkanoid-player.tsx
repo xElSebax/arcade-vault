@@ -10,6 +10,7 @@ import type {
   ArkanoidEngine,
   ArkanoidGameState,
 } from "@/lib/games/arkanoid/types";
+import { useGameSkin } from "@/lib/player-skin";
 import { usePlayerName, writePlayerName } from "@/lib/player-name";
 
 interface ArkanoidPlayerProps {
@@ -19,6 +20,7 @@ interface ArkanoidPlayerProps {
 export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
+  const [skin, setSkin] = useGameSkin(game.id);
   const engineRef = useRef<ArkanoidEngine | null>(null);
 
   const [score, setScore] = useState(0);
@@ -106,6 +108,8 @@ export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
       over={over}
       won={won}
       saved={saved}
+      skin={skin}
+      onSkinChange={setSkin}
       onTogglePause={() => setPaused((p) => !p)}
       onEndGame={endGame}
       onRestart={restart}
@@ -115,6 +119,7 @@ export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
       arena={
         <ArkanoidCanvas
           paused={paused || over}
+          skin={skin}
           onStateChange={handleStateChange}
           engineRef={engineRef}
         />

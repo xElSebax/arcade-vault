@@ -1,4 +1,8 @@
 import {
+  DEFAULT_GAME_SKIN,
+  type GameSkinId,
+} from "@/lib/games/skins/types";
+import {
   CELL,
   COLS,
   H,
@@ -9,6 +13,7 @@ import {
   W,
 } from "./constants";
 import { FRUIT_ATLAS, FRUITS_IMAGE_SRC } from "./sprites";
+import { SNAKE_SKINS } from "./skins";
 import type { SnakeEngine, SnakeGameState, SnakePhase } from "./types";
 import {
   createInitialSnake,
@@ -39,13 +44,6 @@ const GAME_KEYS = new Set([
 
 const INITIAL_DIRECTION: Direction = { x: 1, y: 0 };
 
-const BG_COLOR = "#0a0a12";
-const GRID_LINE = "rgba(0, 255, 136, 0.1)";
-const BODY_COLOR = "#00ff88";
-const BODY_GLOW = "rgba(0, 255, 136, 0.55)";
-const HEAD_COLOR = "#88ffbb";
-const HEAD_OUTLINE = "#00ffcc";
-
 function willHitBody(head: Vec2, snake: Vec2[], growing: boolean): boolean {
   const limit = growing ? snake.length : snake.length - 1;
   for (let i = 1; i < limit; i++) {
@@ -64,8 +62,13 @@ export function createSnakeEngine(): SnakeEngine {
   let mounted = false;
   let imageReady = false;
   let fruitsImage: HTMLImageElement | null = null;
+  let currentSkin: GameSkinId = DEFAULT_GAME_SKIN;
 
   const stateListeners = new Set<(state: SnakeGameState) => void>();
+
+  function tokens() {
+    return SNAKE_SKINS[currentSkin];
+  }
 
   let snake: Vec2[] = createInitialSnake(INITIAL_SNAKE_LENGTH);
   let direction: Direction = { ...INITIAL_DIRECTION };
@@ -95,7 +98,8 @@ export function createSnakeEngine(): SnakeEngine {
   function drawGrid(): void {
     if (!ctx) return;
 
-    ctx.strokeStyle = GRID_LINE;
+    const skin = tokens();
+    ctx.strokeStyle = skin.grid;
     ctx.lineWidth = 0.5;
     for (let col = 1; col < COLS; col++) {
       ctx.beginPath();
@@ -137,14 +141,15 @@ export function createSnakeEngine(): SnakeEngine {
   function drawBodySegment(segment: Vec2): void {
     if (!ctx) return;
 
+    const skin = tokens();
     const px = segment.x * CELL;
     const py = segment.y * CELL;
     const pad = 3;
     const size = CELL - pad * 2;
 
-    ctx.fillStyle = BODY_COLOR;
-    ctx.shadowColor = BODY_GLOW;
-    ctx.shadowBlur = 5;
+    ctx.fillStyle = skin.body;
+    ctx.shadowColor = skin.bodyGlow;
+    ctx.shadowBlur = skin.glowBlur ?? 5;
     ctx.fillRect(px + pad, py + pad, size, size);
     ctx.shadowBlur = 0;
   }
@@ -152,23 +157,24 @@ export function createSnakeEngine(): SnakeEngine {
   function drawHead(head: Vec2, facing: Direction): void {
     if (!ctx) return;
 
+    const skin = tokens();
     const px = head.x * CELL;
     const py = head.y * CELL;
     const pad = 2;
     const size = CELL - pad * 2;
     const eyeSize = 3;
 
-    ctx.fillStyle = HEAD_COLOR;
-    ctx.shadowColor = BODY_GLOW;
-    ctx.shadowBlur = 10;
+    ctx.fillStyle = skin.head;
+    ctx.shadowColor = skin.bodyGlow;
+    ctx.shadowBlur = skin.glowBlur ?? 10;
     ctx.fillRect(px + pad, py + pad, size, size);
     ctx.shadowBlur = 0;
 
-    ctx.strokeStyle = HEAD_OUTLINE;
+    ctx.strokeStyle = skin.headOutline;
     ctx.lineWidth = 1.5;
     ctx.strokeRect(px + pad + 0.5, py + pad + 0.5, size - 1, size - 1);
 
-    ctx.fillStyle = BG_COLOR;
+    ctx.fillStyle = skin.eyeColor;
     if (facing.x === 1) {
       ctx.fillRect(px + CELL - 7, py + 5, eyeSize, eyeSize);
       ctx.fillRect(px + CELL - 7, py + CELL - 8, eyeSize, eyeSize);
@@ -196,7 +202,8 @@ export function createSnakeEngine(): SnakeEngine {
   function draw(): void {
     if (!ctx || !canvas) return;
 
-    ctx.fillStyle = BG_COLOR;
+    const skin = tokens();
+    ctx.fillStyle = skin.background;
     ctx.fillRect(0, 0, W, H);
     drawGrid();
     drawFruit();
@@ -390,6 +397,17 @@ export function createSnakeEngine(): SnakeEngine {
       return () => {
         stateListeners.delete(cb);
       };
+    },
+
+    setSkin(skin: GameSkinId): void {
+      currentSkin = skin;
+      if (mounted) {
+        draw();
+      }
+    },
+
+    getSkin(): GameSkinId {
+      return currentSkin;
     },
   };
 }

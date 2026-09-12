@@ -4,15 +4,18 @@ import { useEffect, useRef } from "react";
 import { H, W } from "@/lib/games/snake/constants";
 import { createSnakeEngine } from "@/lib/games/snake/engine";
 import type { SnakeEngine, SnakeGameState } from "@/lib/games/snake/types";
+import type { GameSkinId } from "@/lib/games/skins/types";
 
 interface SnakeCanvasProps {
   paused: boolean;
+  skin: GameSkinId;
   onStateChange: (state: SnakeGameState) => void;
   engineRef: React.MutableRefObject<SnakeEngine | null>;
 }
 
 export function SnakeCanvas({
   paused,
+  skin,
   onStateChange,
   engineRef,
 }: SnakeCanvasProps) {
@@ -56,6 +59,12 @@ export function SnakeCanvas({
       engine.resume();
     }
   }, [paused]);
+
+  useEffect(() => {
+    const engine = engineInstanceRef.current;
+    if (!engine) return;
+    engine.setSkin(skin);
+  }, [skin]);
 
   return (
     <div className="snake-canvas-wrap">
