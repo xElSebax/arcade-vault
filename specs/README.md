@@ -11,6 +11,31 @@ specs/NN-slug.md
 - `NN` = número secuencial de dos dígitos (`01`, `02`, …)
 - `slug` = descripción corta en kebab-case (`mvp-arkanoid`, `highscores`)
 
+### Game Jam (`@game-jam`)
+
+Los specs generados por `@game-jam` viven en una subcarpeta por sesión:
+
+```
+specs/game-jam/{folder-slug}/
+  README.md              # índice de la sesión (tema, variantes, recomendación)
+  {variant-a-slug}.md    # spec completo — variante A
+  {variant-b-slug}.md    # spec completo — variante B
+```
+
+- `{folder-slug}` = nombre de la carpeta jam (evoca el tema, kebab-case)
+- Cada variante es un **spec completo** (misma profundidad que `07-tetris.md`), con título `# JAM — …` y sin número `NN`
+- Mínimo **2 variantes** por sesión, con gameplay distinto sobre el mismo tema
+
+**Promoción a specs principales:** cuando el humano elige una variante:
+
+1. Listar `specs/` para el siguiente `NN` (p. ej. `10`)
+2. Copiar el archivo elegido a `specs/NN-{slug}.md`
+3. Actualizar el header: `# SPEC NN — {Título} en Arcade Vault`
+4. Cambiar `Estado` a `Aprobado` manualmente
+5. Ejecutar `@spec-impl NN-{slug}`
+
+Memoria de sesiones: [`references/game-jam/sessions-log.md`](../references/game-jam/sessions-log.md)
+
 ## Estados válidos
 
 `Borrador` → `En revisión` → `Aprobado` → `Implementado` · `Obsoleto`

@@ -64,11 +64,37 @@ supabase/migrations/                 # Seed del juego en tabla games
 
 **Referencias de port:** prototipos vanilla en `references/started-games/` (p. ej. `02-asteroids`, `03-tetris`, `04-arkanoid`).
 
-**Pipeline de integración:**
+**Pipeline de integración (clásico):**
 
 ```
 @game-planner → elegir juego → @add-game {slug} → Aprobado → @spec-impl NN-slug
 ```
+
+**Pipeline creativo (game jam):**
+
+```
+@game-jam {tema} → revisar variantes en specs/game-jam/{slug}/ → elegir una → promover a specs/NN-{slug}.md → Aprobado → @spec-impl NN-slug
+```
+
+## Agente `@game-jam`
+
+Genera specs completos de juegos retro a partir de un **tema creativo**. Propone variantes de gameplay y escribe al menos 2 archivos de spec listos para revisión.
+
+| Aspecto | Detalle |
+|---------|---------|
+| Invocación | `@game-jam` o `/game-jam` · argumento: tema (p. ej. `océano`, `neón`) |
+| Skill | [`.claude/skills/game-jam/SKILL.md`](.claude/skills/game-jam/SKILL.md) |
+| Guía de temas | [`.claude/skills/game-jam/theme-guide.md`](.claude/skills/game-jam/theme-guide.md) |
+| Plantilla | [`.claude/skills/game-jam/template.md`](.claude/skills/game-jam/template.md) |
+| Memoria | [`references/game-jam/sessions-log.md`](references/game-jam/sessions-log.md) — log versionado en git |
+| Regla Cursor | [`.cursor/rules/game-jam.mdc`](.cursor/rules/game-jam.mdc) |
+| Salida | `specs/game-jam/{folder-slug}/` con `README.md` + ≥2 specs completos |
+
+**Qué hace:** interpreta el tema, propone ≥2 variantes con encaje distinto, escribe specs al nivel de `specs/07-tetris.md` tras confirmación del usuario; registra la sesión en el log.
+
+**Qué no hace:** no escribe código, migraciones ni branches. No marca specs como `Aprobado`. Tras elegir variante, el humano promueve el archivo a `specs/NN-{slug}.md` y ejecuta `@spec-impl`.
+
+**Estados en el log:** `generado` · `elegido` · `promovido` · `descartado`
 
 ## Agente `@game-planner`
 
@@ -96,13 +122,16 @@ Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar 
 |---------------|-----|
 | `/frontend-design` | Diseñar la interfaz de usuario (estética retro CRT, tokens en `app/arcade-vault.css`). |
 | `@game-planner` | Evaluar qué juego retro encaja en la plataforma; mantener memoria en `references/game-planner/suggestions-log.md`. **No escribe specs** — handoff a `@add-game`. |
+| `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/`. **No implementa código** — promover variante elegida a `specs/NN-{slug}.md` antes de `@spec-impl`. |
 | `@spec` | Diseñar un spec genérico antes de escribir código. |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard). **Extiende `@spec`** — lee primero `/spec`, luego aplica patrones de SPEC 05 y SPEC 06. **No implementa código** — solo produce `specs/NN-slug.md` en `Borrador`. |
 | `@spec-impl` | Implementar un spec en estado `Aprobado`. |
 
 Usa siempre `/frontend-design` para diseñar la interfaz de usuario.
 
-Para integrar un juego nuevo: `@game-planner` → elegir juego → `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug`.
+Para integrar un juego clásico: `@game-planner` → elegir juego → `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug`.
+
+Para un juego temático: `@game-jam {tema}` → revisar variantes → promover a `specs/NN-{slug}.md` → `Aprobado` → `@spec-impl NN-slug`.
 
 ## Estructura del proyecto
 
@@ -134,14 +163,16 @@ lib/
 public/games/             # Assets estáticos por juego (sprites, sonidos)
 supabase/migrations/      # SQL: games, scores, seeds, RLS
 specs/                    # Specs de diseño (spec-driven development)
+  game-jam/               # Specs temáticos con variantes (@game-jam)
 references/
   implemented-games.md    # Inventario de juegos (jugables + placeholders)
   game-planner/           # Memoria de sugerencias (@game-planner)
+  game-jam/               # Memoria de sesiones jam (@game-jam)
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
   source-assets/          # Assets fuente
-.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, @game-planner, nextjs)
-.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, game-planner, frontend-design)
+.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, @game-planner, @game-jam, nextjs)
+.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, game-planner, game-jam, frontend-design)
 ```
 
 Alias de importación: `@/*` apunta a la raíz del proyecto.
@@ -220,11 +251,19 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 2. **Revisión humana** — El humano relee el spec fuera del chat y cambia el estado a `Aprobado` manualmente.
 3. **`@spec-impl`** — Valida que el estado sea `Aprobado`, crea la rama `spec-NN-slug` y implementa paso a paso con pausas para revisar diffs.
 
-**Integración de un juego nuevo:**
+**Integración de un juego nuevo (clásico):**
 
 1. **`@game-planner`** — Evalúa encaje, propone candidatos y persiste la sesión en `references/game-planner/suggestions-log.md`.
 2. **Elección humana** — Se elige el juego a integrar.
 3. **`@add-game {slug}`** — Genera `specs/NN-slug.md` en `Borrador` (extiende `@spec` con patrones SPEC 05 + 06).
+4. **Revisión humana** — Cambiar estado a `Aprobado`.
+5. **`@spec-impl NN-slug`** — Implementación paso a paso.
+
+**Integración creativa (game jam):**
+
+1. **`@game-jam {tema}`** — Propone variantes y escribe specs en `specs/game-jam/{folder-slug}/`.
+2. **Elección humana** — Se elige una variante.
+3. **Promoción** — Copiar spec elegido a `specs/NN-{slug}.md` (asignar siguiente `NN`).
 4. **Revisión humana** — Cambiar estado a `Aprobado`.
 5. **`@spec-impl NN-slug`** — Implementación paso a paso.
 
@@ -256,6 +295,7 @@ Invocar con `@` en el chat:
 | Regla | Uso |
 |-------|-----|
 | `@game-planner` | Evaluar qué juego retro encaja; memoria en `references/game-planner/suggestions-log.md` |
+| `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/` |
 | `@spec` | Diseñar un spec antes de escribir código |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard) |
 | `@spec-impl` | Implementar un spec aprobado |

@@ -1,0 +1,48 @@
+---
+description: Generates complete themed game specs with gameplay variants in specs/game-jam/{slug}/. Use when running a creative jam from a theme. Does NOT write code or implement games.
+alwaysApply: false
+---
+
+# /game-jam — Themed game spec generator
+
+This rule triggers the **game-jam** skill. Read `.claude/skills/game-jam/SKILL.md` and follow it strictly.
+
+## What this does
+
+- Takes a **theme** (e.g. `océano`, `neón`, `invierno`) as input
+- Proposes **≥2 gameplay variants** on the same theme with platform fit scores
+- Writes complete integration specs (same depth as `specs/07-tetris.md`) under `specs/game-jam/{folder-slug}/`
+- Maintains session memory in `references/game-jam/sessions-log.md`
+
+## What this does NOT do
+
+- Write application code, migrations, CSS, or React components
+- Mark specs as `Aprobado`
+- Implement games — that is `@spec-impl` after human approval and promotion to `specs/NN-{slug}.md`
+
+## Supporting files
+
+- `.claude/skills/game-jam/SKILL.md` — four-phase workflow and hard rules
+- `.claude/skills/game-jam/theme-guide.md` — theme interpretation and variant pairs
+- `.claude/skills/game-jam/template.md` — full spec structure for each variant
+- `references/game-jam/sessions-log.md` — persistent jam session memory (read at start, append at end)
+
+## Workflow summary
+
+1. **Context** — read log, catalog, specs 05/07/08/09, criteria, existing `specs/game-jam/` folders
+2. **Interpret theme** — optional clarifying questions or fast mode
+3. **Propose variants** — table with slugs, genres, fit scores; **wait for confirmation**
+4. **Generate** — write `README.md` + ≥2 complete spec files automatically
+5. **Persist** — append session to `sessions-log.md`, then **STOP**
+
+## Creative pipeline
+
+```
+@game-jam {tema} → review variants in specs/game-jam/{slug}/ → pick one → promote to specs/NN-{slug}.md → Aprobado → @spec-impl
+```
+
+## Classic pipeline (unchanged)
+
+```
+@game-planner → @add-game {slug} → Aprobado → @spec-impl
+```
