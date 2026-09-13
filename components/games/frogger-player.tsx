@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { saveScore } from "@/app/actions/save-score";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
@@ -8,9 +8,12 @@ import { FroggerCanvas } from "@/components/games/frogger-canvas";
 import { VirtualGameControls } from "@/components/virtual-game-controls";
 import { useAuth } from "@/components/providers/auth-provider";
 import { LEVEL_TIME_SEC, STARTING_LIVES } from "@/lib/games/frogger/constants";
-import type {
-  FroggerEngine,
-  FroggerGameState,
+import {
+  froggerHudEquals,
+  froggerHudFromGameState,
+  type FroggerEngine,
+  type FroggerGameState,
+  type FroggerHudState,
 } from "@/lib/games/frogger/types";
 import { useTouchPlayMode } from "@/lib/games/touch-controls/detect-touch-mode";
 import { TOUCH_MAPS } from "@/lib/games/touch-controls/maps";
@@ -25,6 +28,16 @@ interface FroggerPlayerProps {
   game: Game;
 }
 
+function createInitialHud(): FroggerHudState {
+  return {
+    score: 0,
+    lives: STARTING_LIVES,
+    level: 1,
+    timeLeft: LEVEL_TIME_SEC,
+    frogsHome: 0,
+  };
+}
+
 export function FroggerPlayer({ game }: FroggerPlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
@@ -32,11 +45,7 @@ export function FroggerPlayer({ game }: FroggerPlayerProps) {
   const touchMode = useTouchPlayMode();
   const engineRef = useRef<FroggerEngine | null>(null);
 
-  const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(STARTING_LIVES);
-  const [level, setLevel] = useState(1);
-  const [timeLeft, setTimeLeft] = useState(LEVEL_TIME_SEC);
-  const [frogsHome, setFrogsHome] = useState(0);
+  const [hud, setHud] = useState<FroggerHudState>(createInitialHud);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [won, setWon] = useState(false);
@@ -55,25 +64,27 @@ export function FroggerPlayer({ game }: FroggerPlayerProps) {
     setInitials((prev) => prev ?? getDefaultPlayerName());
   }, [getDefaultPlayerName]);
 
-  const handleStateChange = useCallback(
-    (state: FroggerGameState) => {
-      setScore(state.score);
-      setLives(state.lives);
-      setLevel(state.level);
-      setTimeLeft(state.timeLeft);
-      setFrogsHome(state.frogsHome);
-      if (state.phase === "gameover") {
-        setOver(true);
-        setWon(false);
-        prefillPlayerName();
-      } else if (state.phase === "win") {
-        setOver(true);
-        setWon(true);
-        prefillPlayerName();
-      }
-    },
-    [prefillPlayerName],
-  );
+  const prefillPlayerNameRef = useRef(prefillPlayerName);
+  useEffect(() => {
+    prefillPlayerNameRef.current = prefillPlayerName;
+  }, [prefillPlayerName]);
+
+  const handleStateChange = useCallback((state: FroggerGameState) => {
+    setHud((prev) => {
+      const next = froggerHudFromGameState(state);
+      return froggerHudEquals(prev, next) ? prev : next;
+    });
+
+    if (state.phase === "gameover") {
+      setOver(true);
+      setWon(false);
+      prefillPlayerNameRef.current();
+    } else if (state.phase === "win") {
+      setOver(true);
+      setWon(true);
+      prefillPlayerNameRef.current();
+    }
+  }, []);
 
   const endGame = () => {
     setOver(true);
@@ -88,6 +99,7 @@ export function FroggerPlayer({ game }: FroggerPlayerProps) {
     setSaved(false);
     setSaveError(null);
     setInitials(null);
+    setHud(createInitialHud());
     engineRef.current?.reset();
   };
 
@@ -107,7 +119,7 @@ export function FroggerPlayer({ game }: FroggerPlayerProps) {
     const result = await saveScore({
       gameId: game.id,
       playerName: initials ?? getDefaultPlayerName(),
-      score,
+      score: hud.score,
     });
 
     if (result.ok) {
@@ -122,11 +134,11 @@ export function FroggerPlayer({ game }: FroggerPlayerProps) {
     <GamePlayerShell
       game={game}
       playerName={playerName}
-      score={score}
-      lives={lives}
-      level={level}
-      timeLeft={timeLeft}
-      frogsHome={frogsHome}
+      score={hud.score}
+      lives={hud.lives}
+      level={hud.level}
+      timeLeft={hud.timeLeft}
+      frogsHome={hud.frogsHome}
       paused={paused}
       over={over}
       won={won}

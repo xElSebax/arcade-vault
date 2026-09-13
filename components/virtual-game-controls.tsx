@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type {
   GameTouchMap,
   TouchAction,
@@ -82,9 +82,7 @@ export function VirtualGameControls({
   const lastPulseAtRef = useRef<Partial<Record<VirtualButton, number>>>({});
   const holdDelayTimersRef = useRef<Map<VirtualButton, number>>(new Map());
   const onActionPulseRef = useRef(onActionPulse);
-  const [activeVisual, setActiveVisual] = useState<VirtualInputState>({
-    ...EMPTY_VIRTUAL_INPUT,
-  });
+  const buttonRefs = useRef<Map<VirtualButton, HTMLButtonElement>>(new Map());
 
   useEffect(() => {
     onInputChangeRef.current = onInputChange;
@@ -106,14 +104,10 @@ export function VirtualGameControls({
     onInputChangeRef.current({ ...holdStateRef.current });
   }, []);
 
-  const setVisual = useCallback((button: VirtualButton, active: boolean) => {
-    setActiveVisual((prev) => {
-      if (prev[button] === active) {
-        return prev;
-      }
-
-      return { ...prev, [button]: active };
-    });
+  const setPressedVisual = useCallback((button: VirtualButton, active: boolean) => {
+    const el = buttonRefs.current.get(button);
+    if (!el) return;
+    el.classList.toggle("virtual-controls__btn--pressed", active);
   }, []);
 
   const clearHoldTimer = useCallback((button: VirtualButton) => {
@@ -168,7 +162,7 @@ export function VirtualGameControls({
   const releaseHoldButton = useCallback(
     (button: VirtualButton) => {
       clearHoldTimer(button);
-      setVisual(button, false);
+      setPressedVisual(button, false);
 
       if (!isHoldButton(mapRef.current, button)) {
         return;
@@ -181,7 +175,7 @@ export function VirtualGameControls({
       holdStateRef.current[button] = false;
       emitHoldState();
     },
-    [clearHoldTimer, emitHoldState, setVisual],
+    [clearHoldTimer, emitHoldState, setPressedVisual],
   );
 
   const releasePointer = useCallback(
@@ -204,7 +198,7 @@ export function VirtualGameControls({
 
     let holdChanged = false;
     for (const button of tracked) {
-      setVisual(button, false);
+      setPressedVisual(button, false);
       if (isHoldButton(mapRef.current, button) && holdStateRef.current[button]) {
         holdStateRef.current[button] = false;
         holdChanged = true;
@@ -214,7 +208,7 @@ export function VirtualGameControls({
     if (holdChanged) {
       emitHoldState();
     }
-  }, [clearAllHoldTimers, emitHoldState, setVisual]);
+  }, [clearAllHoldTimers, emitHoldState, setPressedVisual]);
 
   const isGhostMouse = useCallback((event: { pointerType: string }) => {
     return (
@@ -240,14 +234,14 @@ export function VirtualGameControls({
       }
 
       pointerButtonsRef.current.set(pointerId, button);
-      setVisual(button, true);
+      setPressedVisual(button, true);
       firePulse(button, action);
 
       if (!isPulseAction(action)) {
         startHoldRepeatDelay(button);
       }
     },
-    [firePulse, setVisual, startHoldRepeatDelay],
+    [firePulse, setPressedVisual, startHoldRepeatDelay],
   );
 
   useEffect(() => {
@@ -303,12 +297,9 @@ export function VirtualGameControls({
     [isGhostMouse, pressButton],
   );
 
-  const displayedActive = disabled ? EMPTY_VIRTUAL_INPUT : activeVisual;
-
   const renderButton = (button: VirtualButton, className = "") => {
     const action = map[button];
     const isInactive = action === null;
-    const isPressed = displayedActive[button];
     const isAction = button === "a" || button === "b";
     const isDpad =
       button === "up" ||
@@ -330,11 +321,17 @@ export function VirtualGameControls({
           button === "a" ? "virtual-controls__btn--a" : "",
           button === "b" ? "virtual-controls__btn--b" : "",
           isInactive ? "virtual-controls__btn--inactive" : "",
-          isPressed ? "virtual-controls__btn--pressed" : "",
           className,
         ]
           .filter(Boolean)
           .join(" ")}
+        ref={(node) => {
+          if (node) {
+            buttonRefs.current.set(button, node);
+          } else {
+            buttonRefs.current.delete(button);
+          }
+        }}
         aria-label={ariaLabel}
         aria-disabled={isInactive || disabled}
         disabled={isInactive || disabled}

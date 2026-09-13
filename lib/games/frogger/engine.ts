@@ -27,7 +27,8 @@ import {
   DEFAULT_GAME_SKIN,
   type GameSkinId,
 } from "@/lib/games/skins/types";
-import { isRoadLane, isRiverLane, LANES, laneGaps, laneSpeed } from "./lanes";
+import { laneGaps, laneSpeed, isRoadLane, isRiverLane, LANES } from "./lanes";
+import { createFroggerRenderCache } from "./render-cache";
 import { renderWorld } from "./render";
 import { FROGGER_SKINS } from "./skins";
 import type {
@@ -85,6 +86,7 @@ export function createFroggerEngine(): FroggerEngine {
   let paused = false;
   let mounted = false;
   let currentSkin: GameSkinId = DEFAULT_GAME_SKIN;
+  const renderCache = createFroggerRenderCache();
 
   const keys: Record<string, boolean> = {};
   const justPressed: Record<string, boolean> = {};
@@ -361,7 +363,13 @@ export function createFroggerEngine(): FroggerEngine {
 
   function draw(): void {
     if (!ctx) return;
-    renderWorld(ctx, { frog, vehicles, platforms, homes }, FROGGER_SKINS[currentSkin]);
+    renderWorld(
+      ctx,
+      { frog, vehicles, platforms, homes },
+      currentSkin,
+      FROGGER_SKINS[currentSkin],
+      renderCache,
+    );
   }
 
   function loop(ts: number): void {
@@ -424,6 +432,7 @@ export function createFroggerEngine(): FroggerEngine {
       window.removeEventListener("keyup", onKeyUp);
       for (const key of Object.keys(keys)) delete keys[key];
       for (const key of Object.keys(justPressed)) delete justPressed[key];
+      renderCache.invalidate();
       canvas = null;
       ctx = null;
       mounted = false;
@@ -456,7 +465,9 @@ export function createFroggerEngine(): FroggerEngine {
     },
 
     setSkin(skin: GameSkinId): void {
+      if (currentSkin === skin) return;
       currentSkin = skin;
+      renderCache.invalidate();
       if (mounted) {
         draw();
       }

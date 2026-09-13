@@ -15,6 +15,35 @@ export interface FroggerGameState {
   phase: FroggerPhase;
 }
 
+/** Visible HUD fields synced from the engine (no phase — overlays use separate state). */
+export interface FroggerHudState {
+  score: number;
+  lives: number;
+  level: number;
+  timeLeft: number;
+  frogsHome: number;
+}
+
+export function froggerHudFromGameState(state: FroggerGameState): FroggerHudState {
+  return {
+    score: state.score,
+    lives: state.lives,
+    level: state.level,
+    timeLeft: state.timeLeft,
+    frogsHome: state.frogsHome,
+  };
+}
+
+export function froggerHudEquals(a: FroggerHudState, b: FroggerHudState): boolean {
+  return (
+    a.score === b.score &&
+    a.lives === b.lives &&
+    a.level === b.level &&
+    a.timeLeft === b.timeLeft &&
+    a.frogsHome === b.frogsHome
+  );
+}
+
 export interface FroggerEngine {
   mount(canvas: HTMLCanvasElement): void;
   unmount(): void;
