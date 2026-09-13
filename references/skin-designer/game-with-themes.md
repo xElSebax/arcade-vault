@@ -4,9 +4,9 @@
 
 ## Snapshot catálogo
 
-Última actualización: 2026-09-12
+Última actualización: 2026-09-13
 
-### Jugables (4)
+### Jugables (5)
 
 | ID | Título | classic | retro | neon | Notas |
 |----|--------|---------|-------|------|-------|
@@ -14,6 +14,7 @@
 | `tetris` | TETRIS | completo | completo | completo | Refinamiento 2026-09-12: retro 4 tonos fosforo, neon glow+grid |
 | `arkanoid` | ARKANOID | completo | completo | completo | Refinado: tint map por bloque, scanlines retro, glow neon fuerte |
 | `snake` | SNAKE | completo | completo | completo | Refinamiento retro/neon: ámbar CRT, cuerpo magenta neón, scanlines |
+| `frogger` | FROGGER | completo | completo | completo | Primera sesión 2026-09-13: classic baseline césped/asfalto/río |
 
 ### Placeholders (8)
 
@@ -43,6 +44,13 @@ Skins obligatorios por juego: **classic** (default), **retro**, **neon**.
 ---
 
 ## Sesiones
+
+### 2026-09-13 — frogger
+
+**Contexto:** Primera sesión skins para Frogger (recién integrado). Infra compartida reutilizada. Classic = baseline exacto (`#07140c` bg, césped `#1a4d1a`, asfalto `#2a2a2a`, río `#004466`, rana `#33ff66`, tráfico magenta/cyan).
+**Skins:** classic · retro · neon → completo
+**Archivos:** `lib/games/frogger/skins.ts` (nuevo), `render.ts`, `engine.ts`, `types.ts`, `frogger-canvas.tsx`, `frogger-player.tsx`, `references/implemented-games.md`
+**Verificación:** checklist dark-mode OK — classic regresión visual; retro paleta fosforo/ámbar (≤4 hues) + scanlines; neon tokens de marca (`#00f5ff`, `#ff006e`, `#f5ff00`, `#00ff88`) con glow en rana/tráfico; selector persiste en `av_game_skin_frogger`; hot-swap sin reset de score.
 
 ### 2026-09-12 — asteroids
 

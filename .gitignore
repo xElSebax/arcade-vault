@@ -44,3 +44,6 @@ next-env.d.ts
 # cursor hooks debug log
 .cursor/hooks/hook.log
 .cursor/hooks/pending-format.json
+
+# supabase CLI cache
+supabase/.temp/

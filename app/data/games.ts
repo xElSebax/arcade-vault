@@ -126,6 +126,17 @@ export const GAMES: Game[] = [
     plays: "0",
   },
   {
+    id: "frogger",
+    title: "FROGGER",
+    short: "Cruza la carretera y el río sin convertirte en papilla.",
+    long: "Salta entre carriles de tráfico pixelado, monta troncos y tortugas a la deriva, y ocupa los cinco nenúfares antes de que el cronómetro llegue a cero. Cada nivel acelera el caos. ¿Llegas entero?",
+    cat: "ARCADE",
+    cover: "cover-frogger",
+    color: "yellow",
+    best: 0,
+    plays: "0",
+  },
+  {
     id: "ranaria",
     title: "RANARIA",
     short: "Cruza la autopista de pixeles.",
