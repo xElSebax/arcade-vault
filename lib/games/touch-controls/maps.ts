@@ -1,7 +1,7 @@
 import type { GameTouchMap } from "./types";
 
 export const TOUCH_MAPS: Record<
-  "snake" | "asteroids" | "tetris" | "arkanoid",
+  "snake" | "asteroids" | "tetris" | "arkanoid" | "frogger",
   GameTouchMap
 > = {
   snake: {
@@ -31,6 +31,14 @@ export const TOUCH_MAPS: Record<
   arkanoid: {
     up: null,
     down: null,
+    left: "move_left",
+    right: "move_right",
+    a: null,
+    b: null,
+  },
+  frogger: {
+    up: "move_up",
+    down: "move_down",
     left: "move_left",
     right: "move_right",
     a: null,

@@ -10,6 +10,7 @@ Inventario del catálogo (`app/data/games.ts`). Actualizar al integrar un juego 
 | `tetris` | TETRIS | PUZZLE | yellow | Encaja las piezas antes de que el tablero se llene. | `/games/tetris` · `/play/tetris` |
 | `arkanoid` | ARKANOID | ARCADE | magenta | Rebota la pelota y destruye todos los bloques. | `/games/arkanoid` · `/play/arkanoid` |
 | `snake` | SNAKE | ARCADE | green | Come frutas, crece y no te muerdas la cola. | `/games/snake` · `/play/snake` |
+| `frogger` | FROGGER | ARCADE | yellow | Cruza la carretera y el río sin convertirte en papilla. | `/games/frogger` · `/play/frogger` |
 
 ## Placeholders
 

@@ -17,6 +17,8 @@ interface GamePlayerShellProps {
   level: number;
   lines?: number;
   length?: number;
+  timeLeft?: number;
+  frogsHome?: number;
   hideLives?: boolean;
   paused: boolean;
   over: boolean;
@@ -43,6 +45,8 @@ export function GamePlayerShell({
   level,
   lines,
   length,
+  timeLeft,
+  frogsHome,
   hideLives = false,
   paused,
   over,
@@ -112,6 +116,18 @@ export function GamePlayerShell({
             <div className="hud-stat level">
               <div className="l">Nivel</div>
               <div className="v">{String(level).padStart(2, "0")}</div>
+            </div>
+          )}
+          {timeLeft !== undefined && (
+            <div className="hud-stat">
+              <div className="l">Tiempo</div>
+              <div className="v">{timeLeft}</div>
+            </div>
+          )}
+          {frogsHome !== undefined && (
+            <div className="hud-stat">
+              <div className="l">Meta</div>
+              <div className="v">{frogsHome}/5</div>
             </div>
           )}
         </div>

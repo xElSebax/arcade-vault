@@ -1,6 +1,6 @@
 # JAM — FROGGER (Classic) en Arcade Vault
 
-> **Estado:** Borrador
+> **Estado:** Implementado
 > **Tema jam:** cruza la carretera y el río sin convertirte en papilla
 > **Carpeta:** `specs/game-jam/frogger/01-frogger-classic.md`
 > **Variante:** Classic — Frogger clásico por niveles
