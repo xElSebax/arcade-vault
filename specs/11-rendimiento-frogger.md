@@ -73,6 +73,31 @@ No hay modelo de datos de FPS. Se mide con DevTools (Performance, FPS meter, CPU
 
 5. **Regresión de juego.** Jugar un cruce de carretera + río + home en teclado y, en viewport táctil, un cruce con D-pad. Pausa, game over y cambio de skin en caliente. Sin cambiar mecánica.
 
+6. **QA móvil — barra táctil (plataforma).** Si hay lag al pulsar D-pad con el canvas ya optimizado: auditar `VirtualGameControls` + CSS de `.av-touch-bar` (ver patrones abajo). Aplica a todos los jugables; no es lógica por engine.
+
+## Implementación realizada (referencia para réplica)
+
+Guía reutilizable completa: [`references/performance-game-patterns.md`](../references/performance-game-patterns.md).
+
+| Capa | Archivos | Qué se hizo |
+|------|----------|-------------|
+| HUD React | `types.ts`, `frogger-player.tsx` | `FroggerHudState` + `setHud` con igualdad; `handleStateChange` estable vía refs |
+| Canvas | `render-cache.ts`, `render.ts`, `engine.ts` | Capa estática por skin; scanlines con `CanvasPattern`; glow neon pre-blur por sprite; **rana con `ellipse`** (no `fillRect`) |
+| Táctil (plataforma) | `virtual-game-controls.tsx`, `arcade-vault.css` | `--pressed` vía `classList` sin re-render React; glow CSS sin blur; sin `backdrop-filter` en móvil |
+| Medición | `references/frogger/performance-baseline.md` | Baseline, post-optimización y regresión |
+
+### Corrección post-implementación (neon)
+
+El primer cache de glow de la rana usó `fillRect` → sprite cuadrado. **Regla:** la primitiva del sprite cacheado debe coincidir con el draw original (`buildFrogGlowSprite` con `ellipse`).
+
+### Patrones clave para otros juegos
+
+1. **Medir antes** (CPU 4× + ~390px); anotar canvas vs React vs CSS.
+2. **HUD:** un estado comparado por valor; engine no emite cada frame.
+3. **Canvas:** estático en offscreen; blur solo al construir cache; scanlines = pattern.
+4. **Formas:** rect cache para rects; **ellipse/arcs** para entidades redondas.
+5. **Táctil:** no `setState` en pressed; evitar `box-shadow` con blur y `backdrop-filter` en la barra inferior móvil.
+
 ## Criterios de aceptación
 
 - [x] Existe una baseline anotada (classic / retro / neon × desktop y ~390px, CPU 4× como mínimo) antes de dar por cerradas las optimizaciones.
@@ -84,6 +109,7 @@ No hay modelo de datos de FPS. Se mide con DevTools (Performance, FPS meter, CPU
 - [x] Pausa, reanudar, fin de partida y guardar puntuación siguen iguales.
 - [x] No hay overlay de FPS en producción.
 - [x] No se modifican engines ni skins de otros juegos.
+- [x] Controles táctiles (SPEC 10) no introducen lag perceptible al pulsar: `--pressed` sin re-render React; glow CSS de botones sin blur difuso en móvil.
 
 ## Decisiones
 
@@ -93,6 +119,7 @@ No hay modelo de datos de FPS. Se mide con DevTools (Performance, FPS meter, CPU
 - **Sí:** Pase de HUD React aunque el profiler acabe culpando al canvas: barato y alineado a “React solo se entera de cambios”.
 - **Sí:** Optimizar glow/scanlines de retro y neon **sin** perder calidad perceptible (caché / menos blur por sprite, no apagar el look).
 - **Sí:** `GamePlayerShell` solo se toca si Frogger lo necesita; no un refactor genérico de todos los players.
+- **Sí:** Optimizar barra táctil compartida (`VirtualGameControls`, `.av-touch-bar`) si el QA móvil detecta lag al pulsar — beneficia todos los jugables; documentado en `references/performance-game-patterns.md`.
 - **No:** Overlay de FPS en producción (DevTools basta; overlay `development` no es requisito).
 - **No:** Reescribir el engine, bajar resolución permanente del canvas, quitar skins o recortar features.
 - **No:** Aplicar el arreglo al resto de jugables en este spec.
@@ -104,6 +131,8 @@ No hay modelo de datos de FPS. Se mide con DevTools (Performance, FPS meter, CPU
 |--------|------------|
 | El PC de desarrollo es demasiado potente y “todo da 60 FPS” sin throttling | Aceptación con CPU 4× + viewport ~390px; 6× solo como estrés documentado. |
 | Cachear glow cambia el look neon (bordes duros, menos bloom) | Comparar capturas classic/retro/neon antes/después; ajustar radio/alpha, no eliminar el glow. |
+| Sprite cacheado con primitiva distinta al original (p. ej. `fillRect` en rana elíptica) | Usar la misma primitiva en offscreen (`ellipse`, `arc`, etc.). |
+| Lag al pulsar D-pad en móvil con canvas ya optimizado | Capa táctil: `classList` para `--pressed`, sin blur en `box-shadow` pressed, quitar `backdrop-filter` en `.av-touch-bar` móvil. |
 | Un solo `setHud` mal comparado oculta un cambio de tiempo o ranas en casa | Comparar todos los campos visibles; probar cuenta atrás y ocupación de homes a mano. |
 | Tocar `GamePlayerShell` rompe HUD de otros juegos | Evitar el shell salvo necesidad; si se toca, comprobar un juego más (p. ej. Snake) en smoke. |
 | El cuello está en CSS del CRT (scanlines globales), no en el canvas | El diagnóstico del paso 1 lo confirma; si es CSS, optimizar solo clases usadas por Frogger, no el design system entero. |

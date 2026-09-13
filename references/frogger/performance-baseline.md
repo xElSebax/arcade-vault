@@ -183,4 +183,19 @@ Los valores absolutos en 1× no son comparables 1:1 (metodología distinta del h
 
 **Veredicto paso 5:** ✅ Gameplay, colisiones, HUD, teclado, táctil (SPEC 10), pausa, fin de partida y restart se comportan igual tras las optimizaciones.
 
+---
+
+## Optimización barra táctil (post-SPEC, plataforma)
+
+> Aplicado tras QA móvil: lag al pulsar D-pad con canvas ya a 60 FPS.
+
+| Cambio | Archivo | Efecto |
+|--------|---------|--------|
+| `--pressed` vía `classList` + refs | `virtual-game-controls.tsx` | Sin re-render React por toque |
+| Glow pressed sin blur (`0 0 0 2px`) | `arcade-vault.css` | Mismo look neon, menos coste GPU |
+| Sin `backdrop-filter` en móvil | `arcade-vault.css` | Barra fija no compite con el CRT |
+| Rana neon elíptica en cache | `render-cache.ts` | Corrige sprite cuadrado post-cache |
+
+Detalle reutilizable: [`references/performance-game-patterns.md`](../references/performance-game-patterns.md).
+
 
