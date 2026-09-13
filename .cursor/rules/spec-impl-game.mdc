@@ -1,0 +1,35 @@
+---
+description: Implements an approved game spec via /spec-impl, then runs @skin-designer and @mobile-porter in series. Use with @spec-impl-game {NN-slug}.
+alwaysApply: false
+---
+
+# /spec-impl-game — Game spec implementer + skins + mobile
+
+This rule triggers the **spec-impl-game** skill. Read `.claude/skills/spec-impl-game/SKILL.md` and follow it strictly.
+
+**Prerequisite:** also read `.claude/skills/spec-impl/SKILL.md` and execute Phases 1–4 exactly. `@spec-impl-game` extends `@spec-impl`; it does not replace it for non-game features.
+
+## What this does
+
+- Implements an **Approved** game spec the same way as `@spec-impl` (branch, step pauses)
+- After the last plan step, **automatically** launches `@skin-designer {slug}`, waits, then `@mobile-porter {slug}`
+- Resolves `{slug}` from `specs/NN-{slug}.md`
+
+## What this does NOT do
+
+- Change `/spec-impl` behavior for generic specs
+- Launch skin-designer and mobile-porter in parallel
+- Run Phase 5 if `/spec-impl` aborted (not Approved, missing spec, etc.)
+- Mark specs as `Aprobado`
+
+## Supporting files
+
+- `.claude/skills/spec-impl/SKILL.md` — Phases 1–4 (read first)
+- `.claude/skills/spec-impl-game/SKILL.md` — Phase 5 pipeline
+- `.cursor/agents/skin-designer.md` / `mobile-porter.md` — subagents
+
+## Workflow summary
+
+1. **Phase 0** — read `/spec-impl` skill
+2. **Phases 1–4** — identify spec, Approved gate, branch, implement step by step
+3. **Phase 5** — slug from filename → Task skin-designer (wait) → Task mobile-porter (wait) → summary

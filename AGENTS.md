@@ -67,13 +67,13 @@ supabase/migrations/                 # Seed del juego en tabla games
 **Pipeline de integración (clásico):**
 
 ```
-@game-planner → elegir juego → @add-game {slug} → Aprobado → @spec-impl NN-slug → @mobile-porter {slug}
+@game-planner → elegir juego → @add-game {slug} → Aprobado → @spec-impl-game NN-slug
 ```
 
 **Pipeline creativo (game jam):**
 
 ```
-@game-jam {tema} → revisar variantes en specs/game-jam/{slug}/ → elegir una → promover a specs/NN-{slug}.md → Aprobado → @spec-impl NN-slug
+@game-jam {tema} → revisar variantes en specs/game-jam/{slug}/ → elegir una → promover a specs/NN-{slug}.md → Aprobado → @spec-impl-game NN-slug
 ```
 
 ## Agente `@game-jam`
@@ -95,7 +95,7 @@ Genera specs completos de juegos retro a partir de un **tema creativo** o un **j
 
 **Qué hace:** interpreta el tema, propone ≥2 variantes con encaje distinto, escribe specs al nivel de `specs/07-tetris.md` tras confirmación del usuario; registra la sesión en el log.
 
-**Qué no hace:** no escribe código, migraciones ni branches. No marca specs como `Aprobado`. Tras elegir variante, el humano promueve el archivo a `specs/NN-{slug}.md` y ejecuta `@spec-impl`.
+**Qué no hace:** no escribe código, migraciones ni branches. No marca specs como `Aprobado`. Tras elegir variante, el humano promueve el archivo a `specs/NN-{slug}.md` y ejecuta `@spec-impl-game`.
 
 **Estados en el log:** `generado` · `elegido` · `promovido` · `descartado`
 
@@ -167,18 +167,21 @@ Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar 
 |---------------|-----|
 | `/frontend-design` | Diseñar la interfaz de usuario (estética retro CRT, tokens en `app/arcade-vault.css`). |
 | `@game-planner` | Evaluar qué juego retro encaja en la plataforma; mantener memoria en `references/game-planner/suggestions-log.md`. **No escribe specs** — handoff a `@add-game`. |
-| `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/`. **No implementa código** — promover variante elegida a `specs/NN-{slug}.md` antes de `@spec-impl`. |
+| `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/`. **No implementa código** — promover variante elegida a `specs/NN-{slug}.md` antes de `@spec-impl-game`. |
 | `@skin-designer` | Aplicar skins classic/retro/neon a **un juego a la vez**; memoria en `references/skin-designer/game-with-themes.md`. |
 | `@mobile-porter` | Auditar y corregir touch play móvil en **un juego a la vez**; memoria en `references/mobile-porter/coverage-log.md`. |
 | `@spec` | Diseñar un spec genérico antes de escribir código. |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard). **Extiende `@spec`** — lee primero `/spec`, luego aplica patrones de SPEC 05 y SPEC 06. **No implementa código** — solo produce `specs/NN-slug.md` en `Borrador`. |
-| `@spec-impl` | Implementar un spec en estado `Aprobado`. |
+| `@spec-impl` | Implementar un spec en estado `Aprobado` (features genéricas, no juegos). |
+| `@spec-impl-game` | Implementar un spec de **juego** aprobado: mismas fases que `@spec-impl`, luego `@skin-designer` y `@mobile-porter` en serie. |
 
 Usa siempre `/frontend-design` para diseñar la interfaz de usuario.
 
-Para integrar un juego clásico: `@game-planner` → elegir juego → `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl NN-slug` → `@mobile-porter {slug}`.
+Para integrar un juego clásico: `@game-planner` → elegir juego → `@add-game {slug}` → revisar spec → cambiar a `Aprobado` → `@spec-impl-game NN-slug`.
 
-Para un juego temático: `@game-jam {tema}` → revisar variantes → promover a `specs/NN-{slug}.md` → `Aprobado` → `@spec-impl NN-slug`.
+Para un juego temático: `@game-jam {tema}` → revisar variantes → promover a `specs/NN-{slug}.md` → `Aprobado` → `@spec-impl-game NN-slug`.
+
+Para features que no son juegos: `@spec` → `Aprobado` → `@spec-impl NN-slug`.
 
 ## Estructura del proyecto
 
@@ -220,8 +223,8 @@ references/
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
   source-assets/          # Assets fuente
-.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @add-game, @game-planner, @game-jam, @skin-designer, @mobile-porter, nextjs)
-.claude/skills/           # Skills del proyecto (spec, spec-impl, add-game, game-planner, game-jam, skin-designer, mobile-porter, frontend-design)
+.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @spec-impl-game, @add-game, @game-planner, @game-jam, @skin-designer, @mobile-porter, nextjs)
+.claude/skills/           # Skills del proyecto (spec, spec-impl, spec-impl-game, add-game, game-planner, game-jam, skin-designer, mobile-porter, frontend-design)
 ```
 
 Alias de importación: `@/*` apunta a la raíz del proyecto.
@@ -307,7 +310,7 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 2. **Elección humana** — Se elige el juego a integrar.
 3. **`@add-game {slug}`** — Genera `specs/NN-slug.md` en `Borrador` (extiende `@spec` con patrones SPEC 05 + 06).
 4. **Revisión humana** — Cambiar estado a `Aprobado`.
-5. **`@spec-impl NN-slug`** — Implementación paso a paso.
+5. **`@spec-impl-game NN-slug`** — Igual que `@spec-impl`, luego `@skin-designer` y `@mobile-porter` en serie.
 
 **Integración creativa (game jam):**
 
@@ -315,7 +318,7 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 2. **Elección humana** — Se elige una variante.
 3. **Promoción** — Copiar spec elegido a `specs/NN-{slug}.md` (asignar siguiente `NN`).
 4. **Revisión humana** — Cambiar estado a `Aprobado`.
-5. **`@spec-impl NN-slug`** — Implementación paso a paso.
+5. **`@spec-impl-game NN-slug`** — Implementación + skins + touch.
 
 Configuración en `specs/.spec-config.yml` (`AutoCreateBranch: true` crea la rama automáticamente).
 
@@ -325,7 +328,7 @@ Configuración en `specs/.spec-config.yml` (`AutoCreateBranch: true` crea la ram
 |--------|-------------|
 | `Borrador` | Generado por `@spec`, pendiente de revisión humana |
 | `En revisión` | El humano está iterando |
-| `Aprobado` | Listo para implementar (`@spec-impl` solo funciona con este estado) |
+| `Aprobado` | Listo para implementar (`@spec-impl` o `@spec-impl-game`; ambos exigen este estado) |
 | `Implementado` | Código listo y criterios de aceptación verificados |
 | `Obsoleto` | Reemplazado por otro spec |
 
@@ -350,5 +353,6 @@ Invocar con `@` en el chat:
 | `@mobile-porter` | Touch play móvil por juego; inventario en `references/mobile-porter/coverage-log.md` |
 | `@spec` | Diseñar un spec antes de escribir código |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard) |
-| `@spec-impl` | Implementar un spec aprobado |
+| `@spec-impl` | Implementar un spec aprobado (features genéricas) |
+| `@spec-impl-game` | Spec de juego aprobado: `/spec-impl` + `@skin-designer` + `@mobile-porter` en serie |
 | `@nextjs` | Convenciones y breaking changes de Next.js 16 (archivos en `app/`) |
