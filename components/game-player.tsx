@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
-import { useAuth } from "@/components/providers/auth-provider";
+import { useDefaultPlayerName } from "@/lib/use-default-player-name";
 
 interface GamePlayerProps {
   game: Game;
 }
 
 export function GamePlayer({ game }: GamePlayerProps) {
-  const { user } = useAuth();
+  const defaultPlayerName = useDefaultPlayerName();
 
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
@@ -20,7 +20,7 @@ export function GamePlayer({ game }: GamePlayerProps) {
   const [initials, setInitials] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const playerName = initials ?? user?.displayName ?? "INVITADO";
+  const playerName = initials ?? defaultPlayerName;
 
   useEffect(() => {
     if (over || paused) return;
@@ -57,7 +57,10 @@ export function GamePlayer({ game }: GamePlayerProps) {
       over={over}
       saved={saved}
       onTogglePause={() => setPaused((p) => !p)}
-      onEndGame={() => setOver(true)}
+      onEndGame={() => {
+        setOver(true);
+        setInitials((prev) => prev ?? defaultPlayerName);
+      }}
       onRestart={restart}
       onSaveScore={() => setSaved(true)}
       onInitialsChange={setInitials}

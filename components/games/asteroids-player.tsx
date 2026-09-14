@@ -6,7 +6,6 @@ import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { AsteroidsCanvas } from "@/components/games/asteroids-canvas";
 import { VirtualGameControls } from "@/components/virtual-game-controls";
-import { useAuth } from "@/components/providers/auth-provider";
 import {
   asteroidsHudEquals,
   asteroidsHudFromGameState,
@@ -21,7 +20,8 @@ import type {
   VirtualInputState,
 } from "@/lib/games/touch-controls/types";
 import { useGameSkin } from "@/lib/player-skin";
-import { usePlayerName, writePlayerName } from "@/lib/player-name";
+import { writePlayerName } from "@/lib/player-name";
+import { useDefaultPlayerName } from "@/lib/use-default-player-name";
 
 interface AsteroidsPlayerProps {
   game: Game;
@@ -32,8 +32,7 @@ function createInitialHud(): AsteroidsHudState {
 }
 
 export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
-  const { user } = useAuth();
-  const storedName = usePlayerName();
+  const defaultPlayerName = useDefaultPlayerName();
   const [skin, setSkin] = useGameSkin(game.id);
   const touchMode = useTouchPlayMode();
   const engineRef = useRef<AsteroidsEngine | null>(null);
@@ -46,8 +45,8 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const getDefaultPlayerName = useCallback(
-    () => storedName ?? user?.displayName ?? "INVITADO",
-    [storedName, user?.displayName],
+    () => defaultPlayerName,
+    [defaultPlayerName],
   );
 
   const playerName = initials ?? getDefaultPlayerName();
