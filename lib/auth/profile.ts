@@ -35,35 +35,3 @@ export async function getDisplayNameByUserId(
   const profile = await getProfileByUserId(supabase, userId);
   return profile?.display_name ?? null;
 }
-
-/** Server Actions, RSC y rutas — usa el cliente con cookies de sesión. */
-export async function getServerProfileByUserId(
-  userId: string,
-): Promise<ProfileRow | null> {
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
-  return getProfileByUserId(supabase, userId);
-}
-
-export async function getServerDisplayNameByUserId(
-  userId: string,
-): Promise<string | null> {
-  const profile = await getServerProfileByUserId(userId);
-  return profile?.display_name ?? null;
-}
-
-/** Componentes cliente (`AuthProvider`, etc.). */
-export async function getBrowserProfileByUserId(
-  userId: string,
-): Promise<ProfileRow | null> {
-  const { createClient } = await import("@/lib/supabase/client");
-  const supabase = createClient();
-  return getProfileByUserId(supabase, userId);
-}
-
-export async function getBrowserDisplayNameByUserId(
-  userId: string,
-): Promise<string | null> {
-  const profile = await getBrowserProfileByUserId(userId);
-  return profile?.display_name ?? null;
-}

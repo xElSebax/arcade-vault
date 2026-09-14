@@ -28,7 +28,7 @@ export default function HallOfFamePage() {
   const game = GAMES.find((g) => g.id === tab);
 
   const displayName =
-    storedName ?? (user?.name ? normalizePlayerName(user.name) : null);
+    storedName ?? (user?.displayName ? normalizePlayerName(user.displayName) : null);
 
   const handleTabChange = (gameId: string) => {
     if (gameId !== tab && isSupabaseGame(gameId)) {
@@ -203,7 +203,7 @@ export default function HallOfFamePage() {
                 #{String(youRank).padStart(2, "0")}
               </div>
               <div className="pl" style={{ color: "var(--yellow)" }}>
-                {user.name}
+                {displayName ?? user?.displayName ?? "TÚ"}
               </div>
               <div
                 className="sc"

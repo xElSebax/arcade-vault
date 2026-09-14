@@ -46,8 +46,8 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const getDefaultPlayerName = useCallback(
-    () => storedName ?? user?.name ?? "INVITADO",
-    [storedName, user?.name],
+    () => storedName ?? user?.displayName ?? "INVITADO",
+    [storedName, user?.displayName],
   );
 
   const playerName = initials ?? getDefaultPlayerName();

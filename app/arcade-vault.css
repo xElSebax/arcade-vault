@@ -1792,6 +1792,31 @@ html.av-touch-play .av-main {
   transition: border-color 140ms, box-shadow 140ms;
 }
 .field input:focus { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0,245,255,0.35); }
+.auth-feedback {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.45;
+  letter-spacing: 0.06em;
+}
+.auth-feedback--error { border-color: var(--magenta); color: var(--magenta); }
+.auth-feedback--success { border-color: var(--green); color: var(--green); }
+.auth-feedback--info { border-color: var(--cyan); color: var(--cyan); }
+.auth-link-btn {
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.auth-link-btn:hover { color: var(--cyan); }
 .auth-divider {
   display: flex; align-items: center; gap: 12px;
   margin: 16px 0;

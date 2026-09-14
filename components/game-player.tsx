@@ -20,7 +20,7 @@ export function GamePlayer({ game }: GamePlayerProps) {
   const [initials, setInitials] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const playerName = initials ?? user?.name ?? "INVITADO";
+  const playerName = initials ?? user?.displayName ?? "INVITADO";
 
   useEffect(() => {
     if (over || paused) return;

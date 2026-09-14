@@ -1,5 +1,6 @@
 "use server";
 
+import { scoreUserIdFromAuthUser } from "@/lib/auth/score-user-id";
 import { createClient } from "@/lib/supabase/server";
 
 export interface SaveScoreInput {
@@ -53,6 +54,11 @@ export async function saveScore(input: SaveScoreInput): Promise<SaveScoreResult>
   try {
     const supabase = await createClient();
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const userId = scoreUserIdFromAuthUser(user ?? null);
+
     const { data: game, error: gameError } = await supabase
       .from("games")
       .select("id")
@@ -67,7 +73,7 @@ export async function saveScore(input: SaveScoreInput): Promise<SaveScoreResult>
       game_id: gameId,
       player_name: playerName,
       score,
-      user_id: null,
+      user_id: userId,
     });
 
     if (insertError) {

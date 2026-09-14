@@ -31,7 +31,7 @@ function NavLink({ href, active, onClick, children }: NavLinkProps) {
 export function Nav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const mounted = useMounted();
   const [open, setOpen] = useState(false);
 
@@ -83,10 +83,12 @@ export function Nav() {
           <Btn
             className={authBtnClass}
             variant="ghost"
-            onClick={logout}
+            onClick={() => {
+              void signOut();
+            }}
             aria-current={authActive ? "page" : undefined}
           >
-            {user.name} ▾
+            {user.displayName} ▾
           </Btn>
         ) : (
           <Btn

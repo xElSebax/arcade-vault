@@ -3,6 +3,7 @@
 import {
   getLeaderboardForGame,
   getPlayerBestForGame,
+  getPlayerBestForGameByUserId,
 } from "@/lib/data/leaderboard";
 
 export async function fetchLeaderboardForGame(gameId: string, limit = 12) {
@@ -14,4 +15,11 @@ export async function fetchPlayerBestForGame(
   playerName: string,
 ) {
   return getPlayerBestForGame(gameId, playerName);
+}
+
+export async function fetchPlayerBestForGameByUserId(
+  gameId: string,
+  userId: string,
+) {
+  return getPlayerBestForGameByUserId(gameId, userId);
 }
