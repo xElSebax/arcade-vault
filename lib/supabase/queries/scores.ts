@@ -78,3 +78,42 @@ export async function getPlayerBestInGame(
     date: formatScoreDate(best.created_at),
   };
 }
+
+export async function getPlayerBestInGameByUserId(
+  gameId: string,
+  userId: string,
+): Promise<{ score: number; rank: number; date: string } | null> {
+  const supabase = await createClient();
+
+  const { data: bestRow, error: bestError } = await supabase
+    .from("scores")
+    .select("id, game_id, player_name, score, user_id, created_at")
+    .eq("game_id", gameId)
+    .eq("user_id", userId)
+    .order("score", { ascending: false })
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (bestError || !bestRow) {
+    return null;
+  }
+
+  const best = bestRow as DbScore;
+
+  const { count, error: countError } = await supabase
+    .from("scores")
+    .select("id", { count: "exact", head: true })
+    .eq("game_id", gameId)
+    .gt("score", best.score);
+
+  if (countError) {
+    return null;
+  }
+
+  return {
+    score: best.score,
+    rank: (count ?? 0) + 1,
+    date: formatScoreDate(best.created_at),
+  };
+}

@@ -3,6 +3,7 @@ import { isSupabaseGame } from "@/lib/data/supabase-games";
 import {
   getLeaderboard,
   getPlayerBestInGame,
+  getPlayerBestInGameByUserId,
 } from "@/lib/supabase/queries/scores";
 
 export async function getLeaderboardForGame(
@@ -23,4 +24,14 @@ export async function getPlayerBestForGame(
     return null;
   }
   return getPlayerBestInGame(gameId, playerName);
+}
+
+export async function getPlayerBestForGameByUserId(
+  gameId: string,
+  userId: string,
+): Promise<{ score: number; rank: number; date: string } | null> {
+  if (!isSupabaseGame(gameId)) {
+    return null;
+  }
+  return getPlayerBestInGameByUserId(gameId, userId);
 }

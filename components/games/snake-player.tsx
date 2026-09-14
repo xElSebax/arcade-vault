@@ -6,7 +6,6 @@ import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { SnakeCanvas } from "@/components/games/snake-canvas";
 import { VirtualGameControls } from "@/components/virtual-game-controls";
-import { useAuth } from "@/components/providers/auth-provider";
 import {
   snakeHudEquals,
   snakeHudFromGameState,
@@ -21,7 +20,8 @@ import type {
   VirtualInputState,
 } from "@/lib/games/touch-controls/types";
 import { useGameSkin } from "@/lib/player-skin";
-import { usePlayerName, writePlayerName } from "@/lib/player-name";
+import { writePlayerName } from "@/lib/player-name";
+import { useDefaultPlayerName } from "@/lib/use-default-player-name";
 
 interface SnakePlayerProps {
   game: Game;
@@ -32,8 +32,7 @@ function createInitialHud(): SnakeHudState {
 }
 
 export function SnakePlayer({ game }: SnakePlayerProps) {
-  const { user } = useAuth();
-  const storedName = usePlayerName();
+  const defaultPlayerName = useDefaultPlayerName();
   const [skin, setSkin] = useGameSkin(game.id);
   const touchMode = useTouchPlayMode();
   const engineRef = useRef<SnakeEngine | null>(null);
@@ -46,8 +45,8 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const getDefaultPlayerName = useCallback(
-    () => storedName ?? user?.name ?? "INVITADO",
-    [storedName, user?.name],
+    () => defaultPlayerName,
+    [defaultPlayerName],
   );
 
   const playerName = initials ?? getDefaultPlayerName();

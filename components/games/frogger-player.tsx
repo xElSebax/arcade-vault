@@ -6,7 +6,6 @@ import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { FroggerCanvas } from "@/components/games/frogger-canvas";
 import { VirtualGameControls } from "@/components/virtual-game-controls";
-import { useAuth } from "@/components/providers/auth-provider";
 import { LEVEL_TIME_SEC, STARTING_LIVES } from "@/lib/games/frogger/constants";
 import {
   froggerHudEquals,
@@ -22,7 +21,8 @@ import type {
   VirtualInputState,
 } from "@/lib/games/touch-controls/types";
 import { useGameSkin } from "@/lib/player-skin";
-import { usePlayerName, writePlayerName } from "@/lib/player-name";
+import { writePlayerName } from "@/lib/player-name";
+import { useDefaultPlayerName } from "@/lib/use-default-player-name";
 
 interface FroggerPlayerProps {
   game: Game;
@@ -39,8 +39,7 @@ function createInitialHud(): FroggerHudState {
 }
 
 export function FroggerPlayer({ game }: FroggerPlayerProps) {
-  const { user } = useAuth();
-  const storedName = usePlayerName();
+  const defaultPlayerName = useDefaultPlayerName();
   const [skin, setSkin] = useGameSkin(game.id);
   const touchMode = useTouchPlayMode();
   const engineRef = useRef<FroggerEngine | null>(null);
@@ -54,8 +53,8 @@ export function FroggerPlayer({ game }: FroggerPlayerProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const getDefaultPlayerName = useCallback(
-    () => storedName ?? user?.name ?? "INVITADO",
-    [storedName, user?.name],
+    () => defaultPlayerName,
+    [defaultPlayerName],
   );
 
   const playerName = initials ?? getDefaultPlayerName();

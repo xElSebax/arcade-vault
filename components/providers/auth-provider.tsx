@@ -1,112 +1,111 @@
 "use client";
 
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import {
   createContext,
   useCallback,
   useContext,
-  useSyncExternalStore,
+  useEffect,
+  useMemo,
+  useState,
   type ReactNode,
 } from "react";
 
-const STORAGE_KEY = "av_user";
-const AUTH_EVENT = "av-auth-change";
+import { getBrowserDisplayNameByUserId } from "@/lib/auth/profile.client";
+import { normalizePlayerName } from "@/lib/player-name";
+import { createClient } from "@/lib/supabase/client";
 
-export interface User {
-  name: string;
+export interface AuthUser {
+  id: string;
+  email: string;
+  displayName: string;
 }
 
-interface AuthContextValue {
-  user: User | null;
-  login: (name: string) => void;
-  logout: () => void;
-  loginAsGuest: () => void;
+export interface AuthContextValue {
+  user: AuthUser | null;
+  isLoading: boolean;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function normalizeName(name: string): string {
-  return (name || "PLAYER1").toUpperCase().slice(0, 10);
-}
-
-const readStoredUserCache: {
-  raw: string | null | undefined;
-  user: User | null;
-} = { raw: undefined, user: null };
-
-function readStoredUser(): User | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (raw === readStoredUserCache.raw) return readStoredUserCache.user;
-    readStoredUserCache.raw = raw;
-    if (!raw) {
-      readStoredUserCache.user = null;
-      return null;
-    }
-    const parsed = JSON.parse(raw) as User | null;
-    if (parsed && typeof parsed.name === "string") {
-      readStoredUserCache.user = parsed;
-      return parsed;
-    }
-    readStoredUserCache.user = null;
-    return null;
-  } catch {
-    readStoredUserCache.raw = undefined;
-    readStoredUserCache.user = null;
-    return null;
+function fallbackDisplayName(email: string | undefined): string {
+  const prefix = email?.split("@")[0]?.trim();
+  if (prefix) {
+    return normalizePlayerName(prefix);
   }
+  return "PLAYER";
 }
 
-function subscribe(onStoreChange: () => void) {
-  window.addEventListener(AUTH_EVENT, onStoreChange);
-  return () => window.removeEventListener(AUTH_EVENT, onStoreChange);
-}
+async function mapSupabaseUser(authUser: SupabaseUser): Promise<AuthUser> {
+  const fromProfile = await getBrowserDisplayNameByUserId(authUser.id);
+  const displayName = fromProfile
+    ? normalizePlayerName(fromProfile)
+    : fallbackDisplayName(authUser.email);
 
-function getServerSnapshot(): User | null {
-  return null;
-}
-
-function notifyAuthChange() {
-  window.dispatchEvent(new Event(AUTH_EVENT));
+  return {
+    id: authUser.id,
+    email: authUser.email ?? "",
+    displayName,
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const user = useSyncExternalStore(
-    subscribe,
-    readStoredUser,
-    getServerSnapshot,
-  );
+  const supabase = useMemo(() => createClient(), []);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const persist = useCallback((next: User | null) => {
-    if (next) {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } else {
-      sessionStorage.removeItem(STORAGE_KEY);
-    }
-    notifyAuthChange();
-  }, []);
-
-  const login = useCallback(
-    (name: string) => {
-      persist({ name: normalizeName(name) });
+  const applySessionUser = useCallback(
+    async (authUser: SupabaseUser | null) => {
+      if (!authUser) {
+        setUser(null);
+        return;
+      }
+      const mapped = await mapSupabaseUser(authUser);
+      setUser(mapped);
     },
-    [persist],
+    [],
   );
 
-  const logout = useCallback(() => {
-    persist(null);
-  }, [persist]);
+  useEffect(() => {
+    let active = true;
 
-  const loginAsGuest = useCallback(() => {
-    persist(null);
-  }, [persist]);
+    const loadSession = async () => {
+      setIsLoading(true);
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+      if (!active) return;
+      await applySessionUser(authUser);
+      if (active) setIsLoading(false);
+    };
 
-  const value: AuthContextValue = {
-    user,
-    login,
-    logout,
-    loginAsGuest,
-  };
+    void loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!active) return;
+      setIsLoading(true);
+      await applySessionUser(session?.user ?? null);
+      if (active) setIsLoading(false);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase, applySessionUser]);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  }, [supabase]);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({ user, isLoading, signOut }),
+    [user, isLoading, signOut],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
