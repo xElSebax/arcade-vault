@@ -194,35 +194,35 @@ Documentar en `references/supabase-auth-setup.md` (valores objetivo):
 
 ### Postgres y RLS
 
-- [ ] `games`, `profiles` y `scores` tienen RLS **enabled** en Supabase.
-- [ ] Cliente `anon` puede `SELECT` en `games` y `scores` (leaderboard y catálogo siguen cargando).
-- [ ] Cliente `anon` puede `INSERT` en `scores` solo con `user_id is null` (partida invitado).
-- [ ] Cliente `authenticated` puede `INSERT` en `scores` con `user_id is null` o `user_id = auth.uid()`.
-- [ ] No hay política que permita `UPDATE` o `DELETE` en `scores` para `anon`/`authenticated` (o intentos fallan con error RLS).
+- [x] `games`, `profiles` y `scores` tienen RLS **enabled** en Supabase.
+- [x] Cliente `anon` puede `SELECT` en `games` y `scores` (leaderboard y catálogo siguen cargando).
+- [x] Cliente `anon` puede `INSERT` en `scores` solo con `user_id is null` (partida invitado).
+- [x] Cliente `authenticated` puede `INSERT` en `scores` con `user_id is null` o `user_id = auth.uid()`.
+- [x] No hay política que permita `UPDATE` o `DELETE` en `scores` para `anon`/`authenticated` (o intentos fallan con error RLS).
 
 ### Linter / funciones Supabase
 
-- [ ] Advisor sin WARN `function_search_path_mutable` para `set_profiles_updated_at` y `normalize_profile_display_name`.
-- [ ] Advisor sin WARN `anon_security_definer_function_executable` / `authenticated_security_definer_function_executable` para `handle_new_user` (y funciones revocadas).
-- [ ] `public.rls_auto_enable` no existe o no es invocable vía PostgREST RPC.
+- [x] Advisor sin WARN `function_search_path_mutable` para `set_profiles_updated_at` y `normalize_profile_display_name`.
+- [x] Advisor sin WARN `anon_security_definer_function_executable` / `authenticated_security_definer_function_executable` para `handle_new_user` (y funciones revocadas).
+- [x] `public.rls_auto_enable` no existe o no es invocable vía PostgREST RPC.
 
 ### Next.js
 
-- [ ] Respuesta HTTP de la app incluye `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` y `Referrer-Policy: strict-origin-when-cross-origin` en rutas representativas (`/`, `/auth`, `/play/asteroids`).
+- [x] Respuesta HTTP de la app incluye `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` y `Referrer-Policy: strict-origin-when-cross-origin` en rutas representativas (`/`, `/auth`, `/play/asteroids`).
 
 ### Proxy y rutas
 
-- [ ] `proxy.ts` en la raíz sigue exportando `proxy` + `config.matcher` (patrón Next.js 16); ejecuta refresco de sesión Supabase en rutas no estáticas.
-- [ ] Sin sesión, rutas públicas (`/`, `/games`, `/play/asteroids`, `/hall-of-fame`, `/about`) responden sin redirect a `/auth`.
-- [ ] Sin sesión, una ruta cuyo prefijo esté en `PROTECTED_PATH_PREFIXES` responde con redirect a `/auth` e incluye query `next` con el path solicitado (codificado).
-- [ ] Con sesión activa, GET `/auth` redirige a `/games` (o destino seguro equivalente); `/auth/callback` no se bloquea.
-- [ ] Tras login, el flujo respeta `next` relativo cuando la app ya lo soporta en callback (sin open redirect: solo paths que empiezan por `/` y no por `//`).
+- [x] `proxy.ts` en la raíz sigue exportando `proxy` + `config.matcher` (patrón Next.js 16); ejecuta refresco de sesión Supabase en rutas no estáticas.
+- [x] Sin sesión, rutas públicas (`/`, `/games`, `/play/asteroids`, `/hall-of-fame`, `/about`) responden sin redirect a `/auth`.
+- [x] Sin sesión, una ruta cuyo prefijo esté en `PROTECTED_PATH_PREFIXES` responde con redirect a `/auth` e incluye query `next` con el path solicitado (codificado).
+- [x] Con sesión activa, GET `/auth` redirige a `/games` (o destino seguro equivalente); `/auth/callback` no se bloquea.
+- [x] Tras login, el flujo respeta `next` relativo cuando la app ya lo soporta en callback (sin open redirect: solo paths que empiezan por `/` y no por `//`).
 
 ### Contraseñas en la app
 
-- [ ] Tab **Crear cuenta** rechaza contraseñas que no cumplen la regex (mensaje en español con los cinco requisitos).
-- [ ] Tab **Crear cuenta** acepta una contraseña que cumple política y permite continuar el flujo `signUp` (salvo otros errores de Supabase).
-- [ ] Tab **Iniciar sesión** no exige complejidad en cliente (solo campos requeridos).
+- [x] Tab **Crear cuenta** rechaza contraseñas que no cumplen la regex (mensaje en español con los cinco requisitos).
+- [x] Tab **Crear cuenta** acepta una contraseña que cumple política y permite continuar el flujo `signUp` (salvo otros errores de Supabase).
+- [x] Tab **Iniciar sesión** no exige complejidad en cliente (solo campos requeridos).
 
 ### Dashboard Supabase (manual)
 
@@ -233,8 +233,8 @@ Documentar en `references/supabase-auth-setup.md` (valores objetivo):
 
 ### Documentación y calidad
 
-- [ ] `references/supabase-auth-setup.md` describe los cuatro ajustes de Auth anteriores y cómo revisar advisors.
-- [ ] `npm run build` y `npm run lint` pasan sin errores nuevos atribuibles a este spec.
+- [x] `references/supabase-auth-setup.md` describe los cuatro ajustes de Auth anteriores y cómo revisar advisors.
+- [x] `npm run build` y `npm run lint` pasan sin errores nuevos atribuibles a este spec.
 - [ ] Registro + score invitado + score autenticado siguen funcionando (smoke test SPEC 12).
 
 ## Decisiones
