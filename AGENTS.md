@@ -232,6 +232,7 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 | 09 | Juego Snake | Implementado |
 | 10 | Controles táctiles móvil | Implementado |
 | 11 | Rendimiento Frogger (patrón por juego) | Implementado |
+| 13 | Endurecimiento de seguridad (checklist básico) | Implementado |
 
 Spec **12** (auth Supabase): código en rama `spec-12-auth-supabase`; marcar **Implementado** en `specs/12-auth-supabase.md` tras validar criterios de aceptación (paso 11).
 

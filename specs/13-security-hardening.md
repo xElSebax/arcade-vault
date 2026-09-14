@@ -1,6 +1,6 @@
 # SPEC 13 — Endurecimiento de seguridad (checklist básico)
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 04 — Integración de Supabase en Next.js, SPEC 06 — Catálogo y leaderboard Supabase, SPEC 12 — Autenticación con Supabase
 > **Fecha:** 2026-09-14
 > **Objetivo:** Cumplir `references/security/checklist.md` y la política de contraseñas del dashboard Supabase: RLS y funciones Postgres, headers HTTP en Next.js, protección de rutas en `proxy.ts` (Next.js 16), validación en `/auth` (mín. 8 caracteres + mayúscula, minúscula, dígito y símbolo vía regex compartida) y configuración Auth documentada en `references/supabase-auth-setup.md`.
@@ -226,16 +226,16 @@ Documentar en `references/supabase-auth-setup.md` (valores objetivo):
 
 ### Dashboard Supabase (manual)
 
-- [ ] Minimum password length = **8**.
-- [ ] Password requirements = **lowercase, uppercase, digits and symbols** (o equivalente en UI).
-- [ ] **Leaked password protection** activada.
-- [ ] **Max signup rate** configurado (anti-bot); valor documentado en `references/supabase-auth-setup.md`.
+- [x] Minimum password length = **8**.
+- [x] Password requirements = **lowercase, uppercase, digits and symbols** (o equivalente en UI).
+- [x] **Leaked password protection** activada.
+- [x] **Max signup rate** configurado (anti-bot); valor documentado en `references/supabase-auth-setup.md`.
 
 ### Documentación y calidad
 
 - [x] `references/supabase-auth-setup.md` describe los cuatro ajustes de Auth anteriores y cómo revisar advisors.
 - [x] `npm run build` y `npm run lint` pasan sin errores nuevos atribuibles a este spec.
-- [ ] Registro + score invitado + score autenticado siguen funcionando (smoke test SPEC 12).
+- [x] Registro + score invitado + score autenticado siguen funcionando (smoke test SPEC 12).
 
 ## Decisiones
 

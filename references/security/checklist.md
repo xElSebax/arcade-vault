@@ -1,6 +1,6 @@
 # Checklist de seguridad básico (SPEC 13)
 
-Marcar en dashboard lo que requiera validación humana en Supabase Auth. El resto está cubierto en código/migraciones de la rama `spec-13-security-hardening`.
+SPEC 13 **Implementado** (rama `spec-13-security-hardening`). Ítems de repo verificados; dashboard Auth validado en operación.
 
 ## Repositorio y Next.js
 
@@ -12,10 +12,10 @@ Marcar en dashboard lo que requiera validación humana en Supabase Auth. El rest
 
 ## Dashboard Supabase (manual)
 
-- [ ] **Minimum password length** = 8 (alineado con la app).
-- [ ] **Password requirements** = lowercase, uppercase, digits and symbols.
-- [ ] **Leaked password protection** activada.
-- [ ] **Max signup rate** por IP configurado (referencia documentada: 30/hora/IP en [`supabase-auth-setup.md`](../supabase-auth-setup.md)).
+- [x] **Minimum password length** = 8 (alineado con la app).
+- [x] **Password requirements** = lowercase, uppercase, digits and symbols.
+- [x] **Leaked password protection** activada.
+- [x] **Max signup rate** por IP configurado (referencia documentada: 30/hora/IP en [`supabase-auth-setup.md`](../supabase-auth-setup.md)).
 
 ## Verificación advisors
 
@@ -23,7 +23,7 @@ Tras deploy y ajustes Auth:
 
 - [x] Sin WARN `function_search_path_mutable` en `set_profiles_updated_at` / `normalize_profile_display_name` (remoto Arcade Vault, post-migración SPEC 13).
 - [x] Sin WARN `anon_*` / `authenticated_*_security_definer_function_executable` en `handle_new_user` ni `rls_auto_enable`.
-- [ ] Sin WARN `auth_leaked_password_protection` (depende de activar leaked passwords en Auth).
+- [x] Sin WARN `auth_leaked_password_protection` (depende de activar leaked passwords en Auth).
 
 ### Referencia rápida — headers Next.js
 
