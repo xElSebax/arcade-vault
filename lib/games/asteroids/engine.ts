@@ -1,3 +1,4 @@
+import { shouldYieldKeyboardToDom } from "@/lib/games/keyboard-yield";
 import {
   DEFAULT_GAME_SKIN,
   type GameSkinId,
@@ -88,6 +89,7 @@ export function createAsteroidsEngine(): AsteroidsEngine {
   }
 
   function onKeyDown(e: KeyboardEvent): void {
+    if (shouldYieldKeyboardToDom(e)) return;
     if (GAME_KEYS.has(e.code)) {
       e.preventDefault();
     }

@@ -93,6 +93,7 @@ Invocar con `@nombre` en Cursor o `/nombre` en Claude Code. Skills en [`.claude/
 | `@skin-designer` | Skins classic / retro / neon para un jugable; inventario en `references/skin-designer/`. | [`.cursor/agents/skin-designer.md`](.cursor/agents/skin-designer.md) |
 | `@mobile-porter` | Touch play y layout CRT móvil por jugable (SPEC 10). | [`.cursor/agents/mobile-porter.md`](.cursor/agents/mobile-porter.md) |
 | `@game-performance-booster` | FPS, HUD React y draw canvas por jugable (SPEC 11). | [`.cursor/agents/game-performance-booster.md`](.cursor/agents/game-performance-booster.md) |
+| `@security-auditor` | Auditoría app + Supabase (SPEC 12/13); memoria en `references/security/`. Solo informe por defecto. | [`.cursor/agents/security-auditor.md`](.cursor/agents/security-auditor.md) |
 
 Slugs de jugables actuales para post-integración: `asteroids`, `tetris`, `arkanoid`, `snake`, `frogger`.
 
@@ -111,6 +112,8 @@ Para integrar un juego clásico: `@game-planner` → elegir juego → `@add-game
 Para un juego temático: `@game-jam {tema}` → revisar variantes → promover a `specs/NN-{slug}.md` → `Aprobado` → `@spec-impl-game NN-slug`.
 
 Para features que no son juegos: `@spec` → `Aprobado` → `@spec-impl NN-slug`.
+
+**Seguridad (vigilancia continua):** tras cambios en auth, Supabase, migraciones o APIs → `@security-auditor` o `@security-auditor delta`. Antes de deploy → `@security-auditor full`. Ajustes en dashboard Auth → `@security-auditor dashboard`. Complemento genérico de diff: `/review-security` (Cursor); no sustituye el checklist SPEC 12/13.
 
 ## Estructura del proyecto
 
@@ -152,14 +155,15 @@ references/
   skin-designer/          # Inventario de skins por juego (@skin-designer)
   mobile-porter/          # Inventario de cobertura táctil (@mobile-porter)
   game-performance-booster/  # Inventario de rendimiento por juego (@game-performance-booster)
+  security/               # Checklist SPEC 13 + audit-log (@security-auditor)
   performance-game-patterns.md  # Patrones HUD/canvas/touch (SPEC 11)
   supabase-auth-setup.md    # Checklist dashboard Auth (SPEC 12)
   frogger/                # Baseline de rendimiento (@game-performance-booster)
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
   source-assets/          # Assets fuente
-.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @spec-impl-game, @add-game, @game-planner, @game-jam, @skin-designer, @mobile-porter, @game-performance-booster, nextjs)
-.claude/skills/           # Skills del proyecto (spec, spec-impl, spec-impl-game, add-game, game-planner, game-jam, skin-designer, mobile-porter, game-performance-booster, frontend-design)
+.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @spec-impl-game, @add-game, @game-planner, @game-jam, @skin-designer, @mobile-porter, @game-performance-booster, @security-auditor, nextjs)
+.claude/skills/           # Skills del proyecto (spec, spec-impl, spec-impl-game, add-game, game-planner, game-jam, skin-designer, mobile-porter, game-performance-booster, security-auditor, frontend-design)
 ```
 
 Alias de importación: `@/*` apunta a la raíz del proyecto.
@@ -232,6 +236,7 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 | 09 | Juego Snake | Implementado |
 | 10 | Controles táctiles móvil | Implementado |
 | 11 | Rendimiento Frogger (patrón por juego) | Implementado |
+| 13 | Endurecimiento de seguridad (checklist básico) | Implementado |
 
 Spec **12** (auth Supabase): código en rama `spec-12-auth-supabase`; marcar **Implementado** en `specs/12-auth-supabase.md` tras validar criterios de aceptación (paso 11).
 

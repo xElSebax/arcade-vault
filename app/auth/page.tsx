@@ -5,6 +5,10 @@ import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Btn } from "@/components/btn";
 import { useAuth } from "@/components/providers/auth-provider";
 import { buildAuthCallbackUrl } from "@/lib/auth/callback-url";
+import {
+  isPasswordValid,
+  PASSWORD_REQUIREMENTS_MESSAGE,
+} from "@/lib/auth/password-policy";
 import { normalizePlayerName } from "@/lib/player-name";
 import { createClient } from "@/lib/supabase/client";
 
@@ -142,10 +146,10 @@ function AuthPageContent() {
       });
       return;
     }
-    if (password.length < 6) {
+    if (!isPasswordValid(password)) {
       setFeedback({
         kind: "error",
-        message: "La contraseña debe tener al menos 6 caracteres.",
+        message: PASSWORD_REQUIREMENTS_MESSAGE,
       });
       return;
     }
@@ -375,6 +379,19 @@ function AuthPageContent() {
                 placeholder="••••••••"
                 disabled={formDisabled}
               />
+              {tab === "up" ? (
+                <p
+                  className="mono"
+                  style={{
+                    marginTop: 6,
+                    fontSize: 10,
+                    color: "var(--ink-faint)",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {PASSWORD_REQUIREMENTS_MESSAGE}
+                </p>
+              ) : null}
             </div>
 
             {tab === "in" ? (

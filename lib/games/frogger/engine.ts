@@ -23,6 +23,7 @@ import { createFrog, resetFrog, startHop, updateHop, type Frog } from "./entitie
 import { createHomes, occupiedCount, resetHomes, type Home } from "./entities/home";
 import { createPlatform, updatePlatform, type Platform } from "./entities/platform";
 import { createVehicle, updateVehicle, type Vehicle } from "./entities/vehicle";
+import { shouldYieldKeyboardToDom } from "@/lib/games/keyboard-yield";
 import {
   DEFAULT_GAME_SKIN,
   type GameSkinId,
@@ -128,6 +129,7 @@ export function createFroggerEngine(): FroggerEngine {
   }
 
   function onKeyDown(e: KeyboardEvent): void {
+    if (shouldYieldKeyboardToDom(e)) return;
     if (GAME_KEYS.has(e.key)) {
       e.preventDefault();
     }

@@ -24,6 +24,7 @@ import {
 } from "./entities/paddle";
 import { LEVELS } from "./levels";
 import { ARKANOID_SKINS } from "./skins";
+import { shouldYieldKeyboardToDom } from "@/lib/games/keyboard-yield";
 import {
   DEFAULT_GAME_SKIN,
   type GameSkinId,
@@ -124,6 +125,7 @@ export function createArkanoidEngine(): ArkanoidEngine {
   }
 
   function onKeyDown(e: KeyboardEvent): void {
+    if (shouldYieldKeyboardToDom(e)) return;
     if (e.code !== "ArrowLeft" && e.code !== "ArrowRight") return;
     e.preventDefault();
     unlockSounds();

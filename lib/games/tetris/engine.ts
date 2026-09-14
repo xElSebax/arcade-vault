@@ -1,3 +1,4 @@
+import { shouldYieldKeyboardToDom } from "@/lib/games/keyboard-yield";
 import { DEFAULT_GAME_SKIN, type GameSkinId } from "@/lib/games/skins/types";
 import { BLOCK, COLS, ROWS } from "./constants";
 import {
@@ -237,11 +238,13 @@ export function createTetrisEngine(): TetrisEngine {
   }
 
   function onKeyDown(e: KeyboardEvent): void {
+    if (shouldYieldKeyboardToDom(e)) return;
+    if (e.code === "KeyP") return;
+    if (paused || play.phase === "gameover") return;
+
     if (GAME_KEYS.has(e.code)) {
       e.preventDefault();
     }
-    if (e.code === "KeyP") return;
-    if (paused || play.phase === "gameover") return;
 
     switch (e.code) {
       case "ArrowLeft":
