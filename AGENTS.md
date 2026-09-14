@@ -4,7 +4,7 @@ Este archivo es la memoria persistente del proyecto. Cursor lo lee al inicio de 
 
 ## Qué es este proyecto
 
-**Arcade Vault** es una plataforma web retro para jugar online y competir por la mayor cantidad de puntos. La app ya tiene UI completa (landing, biblioteca, detalle de juego, reproductor CRT, salón de la fama, about/contacto y auth mock), **cinco** juegos jugables con engine TypeScript y leaderboard real en Supabase, y el resto del catálogo como placeholders visuales.
+**Arcade Vault** es una plataforma web retro para jugar online y competir por la mayor cantidad de puntos. La app ya tiene UI completa (landing, biblioteca, detalle de juego, reproductor CRT, salón de la fama, about/contacto y **auth Supabase** en `/auth`), **cinco** juegos jugables con engine TypeScript y leaderboard real en Supabase, y el resto del catálogo como placeholders visuales.
 
 ## Stack técnico
 
@@ -28,7 +28,7 @@ Este archivo es la memoria persistente del proyecto. Cursor lo lee al inicio de 
 | Reproductor | Marco CRT con HUD, pausa, game over y guardado de puntuación (`/play/[id]` o rutas estáticas). SPEC 01 + 05. |
 | Salón de la fama | Tabs por juego; Supabase para juegos reales, mock para el resto (`/hall-of-fame`). SPEC 06. |
 | About / contacto | Página informativa + formulario con envío vía Resend (`/about`). SPEC 03. |
-| Auth mock | Login/registro simulado con nombre en `sessionStorage` (`/auth`). SPEC 01. |
+| Auth Supabase | Email/contraseña, Google, GitHub, perfiles `display_name`, invitado sin sesión (`/auth`, `/auth/callback`). SPEC 12. |
 | Supabase | Tablas `games` y `scores`, migraciones, health check (`/api/health/supabase`). SPEC 04 + 06. |
 | Leaderboard | Server Actions para leer y guardar scores; nombre de jugador en `localStorage`. SPEC 06. |
 
@@ -62,7 +62,7 @@ supabase/migrations/                 # Seed del juego en tabla games
 
 **Shell compartido:** `GamePlayerShell` — HUD externo, overlays de pausa/game over, input de iniciales y botón GUARDAR PUNTUACIÓN.
 
-**Guardado de score:** Server Action `app/actions/save-score.ts` → Supabase `scores`. Nombre normalizado (1–10 chars, mayúsculas) en `localStorage` (`av_player_name`, ver `lib/player-name.ts`).
+**Guardado de score:** Server Action `app/actions/save-score.ts` → Supabase `scores`. `user_id` lo asigna **solo el servidor** tras `auth.getUser()` (email verificado); invitado → `null`. `player_name` es snapshot de la partida. Prefill de iniciales: `localStorage` (`av_player_name`) → perfil → `INVITADO` (`lib/use-default-player-name.ts`, `lib/player-name.ts`).
 
 **Referencias de port:** prototipos vanilla en `references/started-games/` (p. ej. `02-asteroids`, `03-tetris`, `04-arkanoid`).
 
@@ -121,7 +121,7 @@ app/
   globals.css             # Tailwind + import de arcade-vault.css
   arcade-vault.css        # Design system retro (tokens, componentes, covers)
   about/                  # About + contacto
-  auth/                   # Auth mock
+  auth/                   # Login/registro Supabase + callback OAuth/email
   games/                  # Biblioteca, detalle dinámico y rutas estáticas por juego
   play/                   # Reproductor dinámico y rutas estáticas por juego
   hall-of-fame/           # Leaderboard
@@ -137,6 +137,7 @@ components/
 lib/
   games/{slug}/           # Engines de juegos
   games/touch-controls/   # Barra táctil compartida (SPEC 10)
+  auth/                   # Perfil, callback URL, user_id en scores (SPEC 12)
   supabase/               # client, server, queries, types
   data/                   # leaderboard híbrido, supabase-games
   navigation.ts, player-name.ts, contact.ts, use-mounted.ts
@@ -152,6 +153,7 @@ references/
   mobile-porter/          # Inventario de cobertura táctil (@mobile-porter)
   game-performance-booster/  # Inventario de rendimiento por juego (@game-performance-booster)
   performance-game-patterns.md  # Patrones HUD/canvas/touch (SPEC 11)
+  supabase-auth-setup.md    # Checklist dashboard Auth (SPEC 12)
   frogger/                # Baseline de rendimiento (@game-performance-booster)
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
@@ -164,11 +166,11 @@ Alias de importación: `@/*` apunta a la raíz del proyecto.
 
 ## Supabase y datos
 
-- **Tablas:** `games` (catálogo persistido), `scores` (historial de partidas).
+- **Tablas:** `games` (catálogo persistido), `scores` (historial de partidas), `profiles` (`display_name` por usuario, SPEC 12).
 - **Juegos en Supabase:** `asteroids`, `tetris`, `arkanoid`, `snake`, `frogger` (`SUPABASE_GAMES`).
 - **Híbrido:** juegos en Supabase leen/escriben scores reales; el resto usa `seededScores()` mock.
-- **Auth real:** no implementada; `user_id` en scores es `null`. Auth mock solo afecta UI.
-- **Migraciones:** `supabase/migrations/` — aplicar con Supabase CLI o MCP.
+- **Auth:** Supabase Auth (cookies SSR). Sesión en `AuthProvider`; invitado = sin sesión. Scores: `user_id` en servidor si email verificado; `player_name` histórico por fila.
+- **Migraciones:** `supabase/migrations/` — aplicar con Supabase CLI o MCP. Configuración Auth: [`references/supabase-auth-setup.md`](references/supabase-auth-setup.md).
 
 ## Variables de entorno
 
@@ -178,7 +180,8 @@ Ver `.env.example`:
 |----------|-----|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave pública (anon) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Solo servidor; opcional mientras RLS de insert esté deshabilitado |
+| `NEXT_PUBLIC_SITE_URL` | Opcional; origen para redirects OAuth/email (ver `.env.example`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Solo servidor; opcional (scores usan sesión + RLS) |
 | `RESEND_API_KEY` | Envío de correo del formulario de contacto |
 | `CONTACT_TO_EMAIL` | Destinatario de mensajes de contacto |
 
@@ -229,6 +232,8 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 | 09 | Juego Snake | Implementado |
 | 10 | Controles táctiles móvil | Implementado |
 | 11 | Rendimiento Frogger (patrón por juego) | Implementado |
+
+Spec **12** (auth Supabase): código en rama `spec-12-auth-supabase`; marcar **Implementado** en `specs/12-auth-supabase.md` tras validar criterios de aceptación (paso 11).
 
 Juego **Frogger** implementado sin spec numerado en la raíz; diseño en [`specs/game-jam/frogger/`](specs/game-jam/frogger/).
 
