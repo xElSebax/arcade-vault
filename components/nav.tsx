@@ -41,11 +41,11 @@ export function Nav() {
 
   const authBtnClass = `auth-btn${authActive ? " route-active" : ""}`;
   const showUser = mounted && user;
-  const mobileAuthLabel = !mounted
-    ? "Iniciar Sesión"
-    : user
-      ? "Cuenta"
-      : "Iniciar Sesión";
+
+  const handleSignOut = () => {
+    close();
+    void signOut();
+  };
 
   return (
     <>
@@ -80,16 +80,19 @@ export function Nav() {
         </div>
 
         {showUser ? (
-          <Btn
-            className={authBtnClass}
-            variant="ghost"
-            onClick={() => {
-              void signOut();
-            }}
-            aria-current={authActive ? "page" : undefined}
-          >
-            {user.displayName} ▾
-          </Btn>
+          <div className="av-nav-user">
+            <span className="av-nav-user-name" title={user.displayName}>
+              {user.displayName}
+            </span>
+            <Btn
+              className={authBtnClass}
+              variant="ghost"
+              type="button"
+              onClick={handleSignOut}
+            >
+              Cerrar sesión
+            </Btn>
+          </div>
         ) : (
           <Btn
             className={authBtnClass}
@@ -138,9 +141,23 @@ export function Nav() {
         <NavLink href="/about" active={aboutActive} onClick={close}>
           Acerca de
         </NavLink>
-        <NavLink href="/auth" active={authActive} onClick={close}>
-          {mobileAuthLabel}
-        </NavLink>
+        {mounted && user ? (
+          <div className="av-mobile-user">
+            <div className="av-mobile-user-name">{user.displayName}</div>
+            <Btn
+              variant="ghost"
+              className="av-mobile-signout"
+              type="button"
+              onClick={handleSignOut}
+            >
+              Cerrar sesión
+            </Btn>
+          </div>
+        ) : (
+          <NavLink href="/auth" active={authActive} onClick={close}>
+            Iniciar Sesión
+          </NavLink>
+        )}
         <div style={{ flex: 1 }} />
         <div
           className="pixel"
