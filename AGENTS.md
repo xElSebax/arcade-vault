@@ -159,6 +159,28 @@ Audita y corrige la experiencia móvil (touch play + layout CRT) para **un juego
 
 **Estados por columna en el inventario:** `pendiente` · `en_progreso` · `completo` · `parcial`
 
+## Agente `@game-performance-booster`
+
+Audita y optimiza el rendimiento (FPS, HUD React, draw canvas, skins neon/retro) para **un juego jugable a la vez**. Mantiene el inventario en `references/game-performance-booster/coverage-log.md`. Referencia canónica: SPEC 11 y `references/performance-game-patterns.md`.
+
+| Aspecto | Detalle |
+|---------|---------|
+| Invocación | `@game-performance-booster` o `/game-performance-booster` · argumento: slug del juego (`frogger`, `asteroids`, `tetris`, `arkanoid`, `snake`) |
+| Subagente (contexto limpio) | [`.cursor/agents/game-performance-booster.md`](.cursor/agents/game-performance-booster.md) — delegar cuando el usuario pida explícitamente el agente `@game-performance-booster` |
+| Skill | [`.claude/skills/game-performance-booster/SKILL.md`](.claude/skills/game-performance-booster/SKILL.md) |
+| Checklist | [`.claude/skills/game-performance-booster/performance-checklist.md`](.claude/skills/game-performance-booster/performance-checklist.md) |
+| Protocolo de medición | [`.claude/skills/game-performance-booster/measurement-protocol.md`](.claude/skills/game-performance-booster/measurement-protocol.md) |
+| Spec canónico (patrón) | [`specs/11-rendimiento-frogger.md`](specs/11-rendimiento-frogger.md) |
+| Patrones reutilizables | [`references/performance-game-patterns.md`](references/performance-game-patterns.md) |
+| Memoria | [`references/game-performance-booster/coverage-log.md`](references/game-performance-booster/coverage-log.md) — inventario versionado en git |
+| Regla Cursor | [`.cursor/rules/game-performance-booster.mdc`](.cursor/rules/game-performance-booster.mdc) |
+
+**Qué hace:** mide baseline (CPU 4×, ~390px), audita checklist de rendimiento, optimiza HUD y canvas con diffs mínimos, verifica ≥55 FPS y regresión de juego, documenta `references/{slug}/performance-baseline.md`, actualiza `coverage-log.md`.
+
+**Qué no hace:** no optimiza todos los jugables de golpe; no añade overlay FPS en producción; no reescribe engines ni quita skins; no modifica landing/biblioteca/salón/about; no marca specs como `Aprobado`; no añade tests E2E de FPS.
+
+**Estados por columna en el inventario:** `pendiente` · `en_progreso` · `completo` · `parcial` · `n/a`
+
 ## Skills
 
 Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar con `/` en Claude Code o `@` en Cursor.
@@ -170,10 +192,11 @@ Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar 
 | `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/`. **No implementa código** — promover variante elegida a `specs/NN-{slug}.md` antes de `@spec-impl-game`. |
 | `@skin-designer` | Aplicar skins classic/retro/neon a **un juego a la vez**; memoria en `references/skin-designer/game-with-themes.md`. |
 | `@mobile-porter` | Auditar y corregir touch play móvil en **un juego a la vez**; memoria en `references/mobile-porter/coverage-log.md`. |
+| `@game-performance-booster` | Auditar y optimizar rendimiento canvas/HUD en **un juego a la vez**; memoria en `references/game-performance-booster/coverage-log.md`. |
 | `@spec` | Diseñar un spec genérico antes de escribir código. |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard). **Extiende `@spec`** — lee primero `/spec`, luego aplica patrones de SPEC 05 y SPEC 06. **No implementa código** — solo produce `specs/NN-slug.md` en `Borrador`. |
 | `@spec-impl` | Implementar un spec en estado `Aprobado` (features genéricas, no juegos). |
-| `@spec-impl-game` | Implementar un spec de **juego** aprobado: mismas fases que `@spec-impl`, luego `@skin-designer` y `@mobile-porter` en serie. |
+| `@spec-impl-game` | Implementar un spec de **juego** aprobado: mismas fases que `@spec-impl`, luego `@skin-designer`, `@mobile-porter` y `@game-performance-booster` en serie. |
 
 Usa siempre `/frontend-design` para diseñar la interfaz de usuario.
 
@@ -220,11 +243,13 @@ references/
   game-jam/               # Memoria de sesiones jam (@game-jam)
   skin-designer/          # Inventario de skins por juego (@skin-designer)
   mobile-porter/          # Inventario de cobertura táctil (@mobile-porter)
+  game-performance-booster/  # Inventario de rendimiento por juego (@game-performance-booster)
+  performance-game-patterns.md  # Patrones HUD/canvas/touch (SPEC 11)
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
   source-assets/          # Assets fuente
-.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @spec-impl-game, @add-game, @game-planner, @game-jam, @skin-designer, @mobile-porter, nextjs)
-.claude/skills/           # Skills del proyecto (spec, spec-impl, spec-impl-game, add-game, game-planner, game-jam, skin-designer, mobile-porter, frontend-design)
+.cursor/rules/            # Reglas de Cursor (@spec, @spec-impl, @spec-impl-game, @add-game, @game-planner, @game-jam, @skin-designer, @mobile-porter, @game-performance-booster, nextjs)
+.claude/skills/           # Skills del proyecto (spec, spec-impl, spec-impl-game, add-game, game-planner, game-jam, skin-designer, mobile-porter, game-performance-booster, frontend-design)
 ```
 
 Alias de importación: `@/*` apunta a la raíz del proyecto.
@@ -295,6 +320,7 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 | 08 | Juego Arkanoid | Implementado |
 | 09 | Juego Snake | Implementado |
 | 10 | Controles táctiles móvil | Implementado |
+| 11 | Rendimiento Frogger (patrón por juego) | Implementado |
 
 ### Ciclo de trabajo
 
@@ -310,7 +336,7 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 2. **Elección humana** — Se elige el juego a integrar.
 3. **`@add-game {slug}`** — Genera `specs/NN-slug.md` en `Borrador` (extiende `@spec` con patrones SPEC 05 + 06).
 4. **Revisión humana** — Cambiar estado a `Aprobado`.
-5. **`@spec-impl-game NN-slug`** — Igual que `@spec-impl`, luego `@skin-designer` y `@mobile-porter` en serie.
+5. **`@spec-impl-game NN-slug`** — Igual que `@spec-impl`, luego `@skin-designer`, `@mobile-porter` y `@game-performance-booster` en serie.
 
 **Integración creativa (game jam):**
 
@@ -318,7 +344,7 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 2. **Elección humana** — Se elige una variante.
 3. **Promoción** — Copiar spec elegido a `specs/NN-{slug}.md` (asignar siguiente `NN`).
 4. **Revisión humana** — Cambiar estado a `Aprobado`.
-5. **`@spec-impl-game NN-slug`** — Implementación + skins + touch.
+5. **`@spec-impl-game NN-slug`** — Implementación + skins + touch + rendimiento.
 
 Configuración en `specs/.spec-config.yml` (`AutoCreateBranch: true` crea la rama automáticamente).
 
@@ -351,8 +377,9 @@ Invocar con `@` en el chat:
 | `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/` |
 | `@skin-designer` | Skins classic/retro/neon por juego; inventario en `references/skin-designer/game-with-themes.md` |
 | `@mobile-porter` | Touch play móvil por juego; inventario en `references/mobile-porter/coverage-log.md` |
+| `@game-performance-booster` | Rendimiento FPS/HUD/canvas por juego; inventario en `references/game-performance-booster/coverage-log.md` |
 | `@spec` | Diseñar un spec antes de escribir código |
 | `@add-game` | Generar spec unificado por juego (integración + leaderboard) |
 | `@spec-impl` | Implementar un spec aprobado (features genéricas) |
-| `@spec-impl-game` | Spec de juego aprobado: `/spec-impl` + `@skin-designer` + `@mobile-porter` en serie |
+| `@spec-impl-game` | Spec de juego aprobado: `/spec-impl` + `@skin-designer` + `@mobile-porter` + `@game-performance-booster` en serie |
 | `@nextjs` | Convenciones y breaking changes de Next.js 16 (archivos en `app/`) |

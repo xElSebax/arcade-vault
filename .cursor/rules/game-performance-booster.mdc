@@ -1,0 +1,61 @@
+---
+description: Audits and optimizes canvas game performance (FPS, React HUD, render cache, skins) for one Arcade Vault playable at a time. Maintains references/game-performance-booster/coverage-log.md. Use with @game-performance-booster {slug}.
+alwaysApply: false
+---
+
+# /game-performance-booster — Per-game performance audit and fixes
+
+This rule triggers the **game-performance-booster** skill. Read `.claude/skills/game-performance-booster/SKILL.md` and follow it strictly.
+
+## What this does
+
+- Takes a **game slug** (e.g. `frogger`, `tetris`) — **one game per session**
+- Measures baseline before optimizing (CPU 4×, ~390px viewport, three skins)
+- Audits against `performance-checklist.md` and SPEC 11 patterns
+- Fixes HUD React, canvas draw/cache, and shared touch CSS when needed
+- Target: **≥55 FPS** stable in active play @ CPU 4×
+- Updates inventory in `references/game-performance-booster/coverage-log.md`
+
+## What this does NOT do
+
+- Modify landing, library, hall of fame, about, or other non-game pages
+- Optimize all playables in one go
+- Add FPS overlay to production
+- Rewrite engines, permanently lower canvas resolution, or remove skins
+- Write specs or mark them as `Aprobado`
+- Add E2E FPS tests
+
+## Supporting files
+
+- `.claude/skills/game-performance-booster/SKILL.md` — six-phase workflow and hard rules
+- `.claude/skills/game-performance-booster/performance-checklist.md` — per-game audit checklist
+- `.claude/skills/game-performance-booster/measurement-protocol.md` — baseline and re-measure steps
+- `specs/11-rendimiento-frogger.md` — canonical performance acceptance criteria
+- `references/performance-game-patterns.md` — reusable HUD, canvas, touch patterns
+- `references/game-performance-booster/coverage-log.md` — performance inventory (read at start, update at end)
+
+## Workflow summary
+
+1. **Context** — read `coverage-log.md`, SPEC 11, patterns, target game files
+2. **Confirm game** — single slug from argument or user prompt
+3. **Baseline** — measure and document `references/{slug}/performance-baseline.md`
+4. **Audit** — walk `performance-checklist.md`
+5. **Fix** — minimal diffs in player, render, cache if gaps found
+6. **Verify** — re-measure, regression, lint on `/play/{slug}`
+7. **Persist** — update game row + append session in `coverage-log.md`, then **STOP**
+
+## Subagent
+
+For a clean context, delegate to [`.cursor/agents/game-performance-booster.md`](.cursor/agents/game-performance-booster.md) when the user explicitly asks for the `@game-performance-booster` subagent.
+
+## Example invocations
+
+```
+@game-performance-booster frogger
+@game-performance-booster tetris
+@game-performance-booster audit
+```
+
+## Handoff
+
+After `@spec-impl-game` for a new game → `@game-performance-booster {slug}` after skin-designer and mobile-porter.

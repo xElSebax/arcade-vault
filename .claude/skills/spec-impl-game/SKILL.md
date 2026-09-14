@@ -1,19 +1,19 @@
 ---
 name: spec-impl-game
 description: >-
-  Implements an approved game spec using /spec-impl, then runs @skin-designer
-  and @mobile-porter in series for that game slug. Use for playable game
-  integrations. Generic (non-game) specs still use /spec-impl.
+  Implements an approved game spec using /spec-impl, then runs @skin-designer,
+  @mobile-porter, and @game-performance-booster in series for that game slug.
+  Use for playable game integrations. Generic (non-game) specs still use /spec-impl.
 disable-model-invocation: true
 argument-hint: <NN-spec-name>
 allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git checkout:*), Bash(cat:*), Bash(ls:*)
 ---
 
-# /spec-impl-game — Game spec implementer + skins + mobile
+# /spec-impl-game — Game spec implementer + skins + mobile + performance
 
 This skill is a **specialization of `/spec-impl`** for Arcade Vault **playable games**. It does not replace `/spec-impl`. Features that are not games still use `/spec-impl`.
 
-`@spec-impl-game` inherits Phases 1–4 from `/spec-impl` (Approved state, branch `spec-NN-slug`, step-by-step implementation with pauses). After the last implementation step completes, it **automatically** runs `@skin-designer` and then `@mobile-porter` **in series**.
+`@spec-impl-game` inherits Phases 1–4 from `/spec-impl` (Approved state, branch `spec-NN-slug`, step-by-step implementation with pauses). After the last implementation step completes, it **automatically** runs `@skin-designer`, then `@mobile-porter`, then `@game-performance-booster` **in series**.
 
 ## Prerequisite — read `/spec-impl` first
 
@@ -35,7 +35,7 @@ The received argument is: `$ARGUMENTS` (same resolution as `/spec-impl`: full na
 
   Phase 0  →  Read /spec-impl skill
   Phases 1–4  →  Exact /spec-impl behavior (stop if not Approved)
-  Phase 5  →  After last plan step: skin-designer {slug}, then mobile-porter {slug}
+  Phase 5  →  After last plan step: skin-designer {slug}, mobile-porter {slug}, game-performance-booster {slug}
 ```
 
 ---
@@ -55,11 +55,11 @@ Follow `/spec-impl` exactly, including:
 - Pause after each implementation step and wait for confirmation before Step N+1.
 - After the last step, show the `/spec-impl` completion reminder (acceptance criteria, state → Implemented).
 
-**Then continue immediately to Phase 5.** Do not ask whether to start skins or mobile. Do not wait for a second confirmation after the last step.
+**Then continue immediately to Phase 5.** Do not ask whether to start skins, mobile, or performance. Do not wait for a second confirmation after the last step.
 
 ---
 
-### Phase 5 — Skins then mobile (automatic, sequential)
+### Phase 5 — Skins, mobile, then performance (automatic, sequential)
 
 Run this phase **only** when Phases 1–4 finished (all plan steps implemented).
 
@@ -82,16 +82,23 @@ Launch the **skin-designer** subagent (`Task`, `subagent_type: skin-designer`):
 - Pass the resolved slug in the prompt (`@skin-designer {slug}`).
 - Instruct it to follow `.claude/skills/skin-designer/SKILL.md` for this game only.
 - **Wait until it completes.** Do not set `run_in_background`.
-- Do **not** launch `mobile-porter` in the same message.
+- Do **not** launch `mobile-porter` or `game-performance-booster` in the same message.
 
 #### 5.3 `@mobile-porter` second
 
 **Only after** skin-designer has returned, launch **mobile-porter** (`Task`, `subagent_type: mobile-porter`):
 
 - Same slug, follow `.claude/skills/mobile-porter/SKILL.md`.
-- Wait until it completes. Do not run it in parallel with skin-designer.
+- Wait until it completes. Do not run it in parallel with skin-designer or game-performance-booster.
 
-#### 5.4 Final summary
+#### 5.4 `@game-performance-booster` third
+
+**Only after** mobile-porter has returned, launch **game-performance-booster** (`Task`, `subagent_type: game-performance-booster`):
+
+- Same slug, follow `.claude/skills/game-performance-booster/SKILL.md`.
+- Wait until it completes. Do not run it in parallel with skin-designer or mobile-porter.
+
+#### 5.5 Final summary
 
 Tell the user, in their language:
 
@@ -99,11 +106,13 @@ Tell the user, in their language:
 - Slug used
 - Skin-designer result (classic / retro / neon, files, inventory path)
 - Mobile-porter result (checklist columns, files, coverage-log path)
+- Game-performance-booster result (FPS @ 4×, baseline path, performance coverage-log columns, files)
 
 ## Hard rules
 
-- **Never** launch both `Task` calls in one turn.
-- **Never** skip Phase 5 because the game spec already mentions skins or touch. Those agents own their inventories and checklists.
+- **Never** launch more than one Phase 5 `Task` in one turn.
+- **Never** skip Phase 5 because the game spec already mentions skins, touch, or performance. Those agents own their inventories and checklists.
+- **Never** skip `@game-performance-booster` if `@mobile-porter` completed successfully in this pipeline.
 - **Never** run Phase 5 if `/spec-impl` aborted.
 - **Never** mark a spec as `Aprobado`. Spec closure stays as in `/spec-impl` (verify criteria; human/process may set `Implementado`).
 - **Never** implement a generic (non-game) spec with this command; tell the user to use `/spec-impl` instead if they clearly asked for a non-game feature spec.
@@ -112,7 +121,8 @@ Tell the user, in their language:
 
 | Command | Role |
 |---------|------|
-| `/spec-impl` | Approved spec, any feature — no skins/mobile pipeline |
-| `/spec-impl-game` | Approved **game** spec, then skins, then touch |
+| `/spec-impl` | Approved spec, any feature — no skins/mobile/performance pipeline |
+| `/spec-impl-game` | Approved **game** spec, then skins, touch, performance |
 | `@skin-designer` | Skins only, one game |
 | `@mobile-porter` | Touch play only, one game |
+| `@game-performance-booster` | Performance only, one game |

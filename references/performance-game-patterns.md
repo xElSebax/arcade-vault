@@ -1,6 +1,6 @@
 # Patrones de rendimiento — juegos canvas (referencia reutilizable)
 
-> Origen: SPEC 11 (Frogger), 2026-09-13. Usar como checklist al replicar en Asteroids, Snake, Tetris, Arkanoid u otro jugable, o al diseñar una skill/subagente de performance.
+> Origen: SPEC 11 (Frogger), 2026-09-13. Usar como checklist al replicar en Asteroids, Snake, Tetris, Arkanoid u otro jugable. **Ejecutor:** `@game-performance-booster {slug}` (skill en `.claude/skills/game-performance-booster/`, inventario en [`references/game-performance-booster/coverage-log.md`](game-performance-booster/coverage-log.md)).
 
 ## Cuándo aplicar
 
