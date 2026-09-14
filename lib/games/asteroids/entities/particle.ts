@@ -1,3 +1,4 @@
+import type { AsteroidsRenderCache } from "../render-cache";
 import type { AsteroidsSkinTokens } from "../skins";
 import { rand } from "../utils";
 
@@ -29,23 +30,39 @@ export class Particle {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
+  draw(
+    ctx: CanvasRenderingContext2D,
+    tokens: AsteroidsSkinTokens,
+    cache?: AsteroidsRenderCache,
+  ): void {
     const alpha = this.ttl / this.life;
     const [r, g, b] = tokens.particleRgb;
     const color = `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
 
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-
     const particleGlow =
       tokens.particleGlowBlur ??
       (tokens.glowBlur ? Math.round(tokens.glowBlur * 0.5) : 0);
+
     if (particleGlow > 0) {
+      if (cache?.drawParticleGlow(ctx, this.x, this.y, alpha)) {
+        return;
+      }
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
       ctx.shadowBlur = particleGlow;
       ctx.shadowColor = color;
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(this.x - this.vx * 0.05, this.y - this.vy * 0.05);
+      ctx.stroke();
+      ctx.restore();
+      return;
     }
 
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);
     ctx.lineTo(this.x - this.vx * 0.05, this.y - this.vy * 0.05);

@@ -1,13 +1,19 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { saveScore } from "@/app/actions/save-score";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { AsteroidsCanvas } from "@/components/games/asteroids-canvas";
 import { VirtualGameControls } from "@/components/virtual-game-controls";
 import { useAuth } from "@/components/providers/auth-provider";
-import type { AsteroidsEngine, AsteroidsGameState } from "@/lib/games/asteroids/types";
+import {
+  asteroidsHudEquals,
+  asteroidsHudFromGameState,
+  type AsteroidsEngine,
+  type AsteroidsGameState,
+  type AsteroidsHudState,
+} from "@/lib/games/asteroids/types";
 import { useTouchPlayMode } from "@/lib/games/touch-controls/detect-touch-mode";
 import { TOUCH_MAPS } from "@/lib/games/touch-controls/maps";
 import type {
@@ -21,6 +27,10 @@ interface AsteroidsPlayerProps {
   game: Game;
 }
 
+function createInitialHud(): AsteroidsHudState {
+  return { score: 0, lives: 3, level: 1 };
+}
+
 export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
@@ -28,9 +38,7 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
   const touchMode = useTouchPlayMode();
   const engineRef = useRef<AsteroidsEngine | null>(null);
 
-  const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(3);
-  const [level, setLevel] = useState(1);
+  const [hud, setHud] = useState<AsteroidsHudState>(createInitialHud);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [initials, setInitials] = useState<string | null>(null);
@@ -48,18 +56,22 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
     setInitials((prev) => prev ?? getDefaultPlayerName());
   }, [getDefaultPlayerName]);
 
-  const handleStateChange = useCallback(
-    (state: AsteroidsGameState) => {
-      setScore(state.score);
-      setLives(state.lives);
-      setLevel(state.level);
-      if (state.phase === "gameover") {
-        setOver(true);
-        prefillPlayerName();
-      }
-    },
-    [prefillPlayerName],
-  );
+  const prefillPlayerNameRef = useRef(prefillPlayerName);
+  useEffect(() => {
+    prefillPlayerNameRef.current = prefillPlayerName;
+  }, [prefillPlayerName]);
+
+  const handleStateChange = useCallback((state: AsteroidsGameState) => {
+    setHud((prev) => {
+      const next = asteroidsHudFromGameState(state);
+      return asteroidsHudEquals(prev, next) ? prev : next;
+    });
+
+    if (state.phase === "gameover") {
+      setOver(true);
+      prefillPlayerNameRef.current();
+    }
+  }, []);
 
   const endGame = () => {
     setOver(true);
@@ -73,6 +85,7 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
     setSaved(false);
     setSaveError(null);
     setInitials(null);
+    setHud(createInitialHud());
     engineRef.current?.reset();
   };
 
@@ -92,7 +105,7 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
     const result = await saveScore({
       gameId: game.id,
       playerName: initials ?? getDefaultPlayerName(),
-      score,
+      score: hud.score,
     });
 
     if (result.ok) {
@@ -107,9 +120,9 @@ export function AsteroidsPlayer({ game }: AsteroidsPlayerProps) {
     <GamePlayerShell
       game={game}
       playerName={playerName}
-      score={score}
-      lives={lives}
-      level={level}
+      score={hud.score}
+      lives={hud.lives}
+      level={hud.level}
       paused={paused}
       over={over}
       saved={saved}

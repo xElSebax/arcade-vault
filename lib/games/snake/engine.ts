@@ -4,15 +4,12 @@ import {
 } from "@/lib/games/skins/types";
 import {
   CELL,
-  COLS,
-  H,
   INITIAL_SNAKE_LENGTH,
   POINTS_PER_FRUIT,
-  ROWS,
   SPEED_INITIAL,
-  W,
 } from "./constants";
 import { FRUIT_ATLAS, FRUITS_IMAGE_SRC } from "./sprites";
+import { createSnakeRenderCache, type SnakeRenderCache } from "./render-cache";
 import { SNAKE_SKINS } from "./skins";
 import type {
   TouchAction,
@@ -47,6 +44,11 @@ const GAME_KEYS = new Set([
 ]);
 
 const INITIAL_DIRECTION: Direction = { x: 1, y: 0 };
+
+const BODY_PAD = 3;
+const BODY_SIZE = CELL - BODY_PAD * 2;
+const HEAD_PAD = 2;
+const HEAD_SIZE = CELL - HEAD_PAD * 2;
 
 function directionFromTouchAction(action: TouchAction): Direction | null {
   switch (action) {
@@ -90,6 +92,7 @@ export function createSnakeEngine(): SnakeEngine {
   let imageReady = false;
   let fruitsImage: HTMLImageElement | null = null;
   let currentSkin: GameSkinId = DEFAULT_GAME_SKIN;
+  const renderCache: SnakeRenderCache = createSnakeRenderCache();
 
   const stateListeners = new Set<(state: SnakeGameState) => void>();
 
@@ -119,26 +122,6 @@ export function createSnakeEngine(): SnakeEngine {
     const state = currentState();
     for (const listener of stateListeners) {
       listener(state);
-    }
-  }
-
-  function drawGrid(): void {
-    if (!ctx) return;
-
-    const skin = tokens();
-    ctx.strokeStyle = skin.grid;
-    ctx.lineWidth = 0.5;
-    for (let col = 1; col < COLS; col++) {
-      ctx.beginPath();
-      ctx.moveTo(col * CELL, 0);
-      ctx.lineTo(col * CELL, H);
-      ctx.stroke();
-    }
-    for (let row = 1; row < ROWS; row++) {
-      ctx.beginPath();
-      ctx.moveTo(0, row * CELL);
-      ctx.lineTo(W, row * CELL);
-      ctx.stroke();
     }
   }
 
@@ -176,14 +159,17 @@ export function createSnakeEngine(): SnakeEngine {
     const skin = tokens();
     const px = segment.x * CELL;
     const py = segment.y * CELL;
-    const pad = 3;
-    const size = CELL - pad * 2;
+    const x = px + BODY_PAD;
+    const y = py + BODY_PAD;
 
-    ctx.fillStyle = skin.body;
-    ctx.shadowColor = skin.bodyGlow;
-    ctx.shadowBlur = skin.glowBlur ?? 5;
-    ctx.fillRect(px + pad, py + pad, size, size);
-    ctx.shadowBlur = 0;
+    const usedGlow = renderCache.drawBodyGlow(ctx, x, y);
+    if (!usedGlow) {
+      ctx.fillStyle = skin.body;
+      ctx.shadowColor = skin.bodyGlow;
+      ctx.shadowBlur = skin.glowBlur ?? 5;
+      ctx.fillRect(x, y, BODY_SIZE, BODY_SIZE);
+      ctx.shadowBlur = 0;
+    }
   }
 
   function drawHead(head: Vec2, facing: Direction): void {
@@ -192,19 +178,22 @@ export function createSnakeEngine(): SnakeEngine {
     const skin = tokens();
     const px = head.x * CELL;
     const py = head.y * CELL;
-    const pad = 2;
-    const size = CELL - pad * 2;
+    const x = px + HEAD_PAD;
+    const y = py + HEAD_PAD;
     const eyeSize = 3;
 
-    ctx.fillStyle = skin.head;
-    ctx.shadowColor = skin.bodyGlow;
-    ctx.shadowBlur = skin.headGlowBlur ?? skin.glowBlur ?? 10;
-    ctx.fillRect(px + pad, py + pad, size, size);
-    ctx.shadowBlur = 0;
+    const usedGlow = renderCache.drawHeadGlow(ctx, x, y);
+    if (!usedGlow) {
+      ctx.fillStyle = skin.head;
+      ctx.shadowColor = skin.bodyGlow;
+      ctx.shadowBlur = skin.headGlowBlur ?? skin.glowBlur ?? 10;
+      ctx.fillRect(x, y, HEAD_SIZE, HEAD_SIZE);
+      ctx.shadowBlur = 0;
+    }
 
     ctx.strokeStyle = skin.headOutline;
     ctx.lineWidth = 1.5;
-    ctx.strokeRect(px + pad + 0.5, py + pad + 0.5, size - 1, size - 1);
+    ctx.strokeRect(x + 0.5, y + 0.5, HEAD_SIZE - 1, HEAD_SIZE - 1);
 
     ctx.fillStyle = skin.eyeColor;
     if (facing.x === 1) {
@@ -231,26 +220,16 @@ export function createSnakeEngine(): SnakeEngine {
     }
   }
 
-  function drawScanlines(opacity: number): void {
-    if (!ctx) return;
-
-    ctx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
-    for (let y = 0; y < H; y += 2) {
-      ctx.fillRect(0, y, W, 1);
-    }
-  }
-
   function draw(): void {
     if (!ctx || !canvas) return;
 
     const skin = tokens();
-    ctx.fillStyle = skin.background;
-    ctx.fillRect(0, 0, W, H);
-    drawGrid();
+    renderCache.ensure(ctx, currentSkin, skin);
+    renderCache.blitStaticLayer(ctx);
     drawFruit();
     drawSnake();
     if (skin.scanlineOpacity) {
-      drawScanlines(skin.scanlineOpacity);
+      renderCache.drawScanlines(ctx);
     }
   }
 
@@ -411,6 +390,7 @@ export function createSnakeEngine(): SnakeEngine {
     unmount(): void {
       stopLoop();
       window.removeEventListener("keydown", onKeyDown);
+      renderCache.invalidate();
       canvas = null;
       ctx = null;
       mounted = false;
@@ -449,7 +429,9 @@ export function createSnakeEngine(): SnakeEngine {
     },
 
     setSkin(skin: GameSkinId): void {
+      if (currentSkin === skin) return;
       currentSkin = skin;
+      renderCache.invalidate();
       if (mounted) {
         draw();
       }

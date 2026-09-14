@@ -16,6 +16,7 @@ import { Particle } from "./entities/particle";
 import { PowerUp } from "./entities/power-up";
 import { Ship } from "./entities/ship";
 import { ASTEROIDS_SKINS } from "./skins";
+import { createAsteroidsRenderCache } from "./render-cache";
 import type {
   TouchAction,
   VirtualInputState,
@@ -63,6 +64,7 @@ export function createAsteroidsEngine(): AsteroidsEngine {
   let powerUpSpawned = false;
   let killsSinceSpawn = 0;
   let currentSkin: GameSkinId = DEFAULT_GAME_SKIN;
+  const renderCache = createAsteroidsRenderCache();
 
   function tokens() {
     return ASTEROIDS_SKINS[currentSkin];
@@ -271,31 +273,6 @@ export function createAsteroidsEngine(): AsteroidsEngine {
     ctx.restore();
   }
 
-  function drawGrid(
-    context: CanvasRenderingContext2D,
-    skinTokens: ReturnType<typeof tokens>,
-  ): void {
-    if (!skinTokens.grid) return;
-
-    const step = 40;
-    context.save();
-    context.strokeStyle = skinTokens.grid;
-    context.lineWidth = skinTokens.gridLineWidth ?? 1;
-    for (let x = 0; x <= W; x += step) {
-      context.beginPath();
-      context.moveTo(x, 0);
-      context.lineTo(x, H);
-      context.stroke();
-    }
-    for (let y = 0; y <= H; y += step) {
-      context.beginPath();
-      context.moveTo(0, y);
-      context.lineTo(W, y);
-      context.stroke();
-    }
-    context.restore();
-  }
-
   function drawHUD(skinTokens: ReturnType<typeof tokens>): void {
     if (!ctx) return;
 
@@ -324,16 +301,14 @@ export function createAsteroidsEngine(): AsteroidsEngine {
     const context = ctx;
     const skinTokens = tokens();
 
-    context.fillStyle = skinTokens.background;
-    context.fillRect(0, 0, W, H);
+    renderCache.ensure(context, currentSkin, skinTokens);
+    renderCache.blitStaticLayer(context);
 
-    drawGrid(context, skinTokens);
-
-    particles.forEach((p) => p.draw(context, skinTokens));
-    asteroids.forEach((a) => a.draw(context, skinTokens));
-    powerUps.forEach((p) => p.draw(context, skinTokens));
-    bullets.forEach((b) => b.draw(context, skinTokens));
-    ship.draw(context, skinTokens);
+    particles.forEach((p) => p.draw(context, skinTokens, renderCache));
+    asteroids.forEach((a) => a.draw(context, skinTokens, renderCache));
+    powerUps.forEach((p) => p.draw(context, skinTokens, renderCache));
+    bullets.forEach((b) => b.draw(context, skinTokens, renderCache));
+    ship.draw(context, skinTokens, renderCache);
 
     drawHUD(skinTokens);
   }
@@ -389,6 +364,7 @@ export function createAsteroidsEngine(): AsteroidsEngine {
 
     unmount(): void {
       stopLoop();
+      renderCache.invalidate();
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
 
@@ -434,6 +410,7 @@ export function createAsteroidsEngine(): AsteroidsEngine {
 
     setSkin(skin: GameSkinId): void {
       currentSkin = skin;
+      renderCache.invalidate();
       if (mounted && !paused) {
         draw();
       }

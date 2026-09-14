@@ -1,13 +1,19 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { saveScore } from "@/app/actions/save-score";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { SnakeCanvas } from "@/components/games/snake-canvas";
 import { VirtualGameControls } from "@/components/virtual-game-controls";
 import { useAuth } from "@/components/providers/auth-provider";
-import type { SnakeEngine, SnakeGameState } from "@/lib/games/snake/types";
+import {
+  snakeHudEquals,
+  snakeHudFromGameState,
+  type SnakeEngine,
+  type SnakeGameState,
+  type SnakeHudState,
+} from "@/lib/games/snake/types";
 import { useTouchPlayMode } from "@/lib/games/touch-controls/detect-touch-mode";
 import { TOUCH_MAPS } from "@/lib/games/touch-controls/maps";
 import type {
@@ -21,6 +27,10 @@ interface SnakePlayerProps {
   game: Game;
 }
 
+function createInitialHud(): SnakeHudState {
+  return { score: 0, length: 3 };
+}
+
 export function SnakePlayer({ game }: SnakePlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
@@ -28,8 +38,7 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
   const touchMode = useTouchPlayMode();
   const engineRef = useRef<SnakeEngine | null>(null);
 
-  const [score, setScore] = useState(0);
-  const [length, setLength] = useState(3);
+  const [hud, setHud] = useState<SnakeHudState>(createInitialHud);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [initials, setInitials] = useState<string | null>(null);
@@ -47,17 +56,22 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
     setInitials((prev) => prev ?? getDefaultPlayerName());
   }, [getDefaultPlayerName]);
 
-  const handleStateChange = useCallback(
-    (state: SnakeGameState) => {
-      setScore(state.score);
-      setLength(state.length);
-      setOver(state.phase === "gameover");
-      if (state.phase === "gameover") {
-        prefillPlayerName();
-      }
-    },
-    [prefillPlayerName],
-  );
+  const prefillPlayerNameRef = useRef(prefillPlayerName);
+  useEffect(() => {
+    prefillPlayerNameRef.current = prefillPlayerName;
+  }, [prefillPlayerName]);
+
+  const handleStateChange = useCallback((state: SnakeGameState) => {
+    setHud((prev) => {
+      const next = snakeHudFromGameState(state);
+      return snakeHudEquals(prev, next) ? prev : next;
+    });
+
+    if (state.phase === "gameover") {
+      setOver(true);
+      prefillPlayerNameRef.current();
+    }
+  }, []);
 
   const endGame = () => {
     setOver(true);
@@ -71,6 +85,7 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
     setSaved(false);
     setSaveError(null);
     setInitials(null);
+    setHud(createInitialHud());
     engineRef.current?.reset();
   };
 
@@ -90,7 +105,7 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
     const result = await saveScore({
       gameId: game.id,
       playerName: initials ?? getDefaultPlayerName(),
-      score,
+      score: hud.score,
     });
 
     if (result.ok) {
@@ -105,10 +120,10 @@ export function SnakePlayer({ game }: SnakePlayerProps) {
     <GamePlayerShell
       game={game}
       playerName={playerName}
-      score={score}
+      score={hud.score}
       lives={0}
       level={1}
-      length={length}
+      length={hud.length}
       hideLives
       paused={paused}
       over={over}

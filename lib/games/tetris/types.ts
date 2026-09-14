@@ -13,6 +13,25 @@ export interface TetrisGameState {
   phase: TetrisPhase;
 }
 
+/** Visible HUD fields driven by the engine (not pause/over overlays). */
+export interface TetrisHudState {
+  score: number;
+  lines: number;
+  level: number;
+}
+
+export function tetrisHudFromGameState(state: TetrisGameState): TetrisHudState {
+  return {
+    score: state.score,
+    lines: state.lines,
+    level: state.level,
+  };
+}
+
+export function tetrisHudEquals(a: TetrisHudState, b: TetrisHudState): boolean {
+  return a.score === b.score && a.lines === b.lines && a.level === b.level;
+}
+
 export interface TetrisEngine {
   mount(canvas: HTMLCanvasElement, nextCanvas: HTMLCanvasElement): void;
   unmount(): void;

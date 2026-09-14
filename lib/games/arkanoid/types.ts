@@ -22,6 +22,30 @@ export interface ArkanoidGameState {
   phase: ArkanoidPhase;
 }
 
+/** Campos visibles en GamePlayerShell (sin phase — overlays aparte). */
+export interface ArkanoidHudState {
+  score: number;
+  lives: number;
+  level: number;
+}
+
+export function arkanoidHudFromGameState(
+  state: ArkanoidGameState,
+): ArkanoidHudState {
+  return {
+    score: state.score,
+    lives: state.lives,
+    level: state.level,
+  };
+}
+
+export function arkanoidHudEquals(
+  a: ArkanoidHudState,
+  b: ArkanoidHudState,
+): boolean {
+  return a.score === b.score && a.lives === b.lives && a.level === b.level;
+}
+
 export interface ArkanoidEngine {
   mount(canvas: HTMLCanvasElement): void;
   unmount(): void;

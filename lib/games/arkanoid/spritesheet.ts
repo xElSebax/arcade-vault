@@ -76,6 +76,10 @@ export function isSpritesheetReady(): boolean {
   return ssLoaded;
 }
 
+export function getSpritesheetCanvas(): HTMLCanvasElement | null {
+  return ssCanvas;
+}
+
 export function loadSpritesheet(cb: () => void): void {
   if (ssLoaded) {
     cb();

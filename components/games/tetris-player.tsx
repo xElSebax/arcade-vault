@@ -1,13 +1,19 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { saveScore } from "@/app/actions/save-score";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { TetrisCanvas } from "@/components/games/tetris-canvas";
 import { VirtualGameControls } from "@/components/virtual-game-controls";
 import { useAuth } from "@/components/providers/auth-provider";
-import type { TetrisEngine, TetrisGameState } from "@/lib/games/tetris/types";
+import {
+  tetrisHudEquals,
+  tetrisHudFromGameState,
+  type TetrisEngine,
+  type TetrisGameState,
+  type TetrisHudState,
+} from "@/lib/games/tetris/types";
 import { useTouchPlayMode } from "@/lib/games/touch-controls/detect-touch-mode";
 import { TOUCH_MAPS } from "@/lib/games/touch-controls/maps";
 import type {
@@ -21,6 +27,10 @@ interface TetrisPlayerProps {
   game: Game;
 }
 
+function createInitialHud(): TetrisHudState {
+  return { score: 0, lines: 0, level: 1 };
+}
+
 export function TetrisPlayer({ game }: TetrisPlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
@@ -28,9 +38,7 @@ export function TetrisPlayer({ game }: TetrisPlayerProps) {
   const touchMode = useTouchPlayMode();
   const engineRef = useRef<TetrisEngine | null>(null);
 
-  const [score, setScore] = useState(0);
-  const [lines, setLines] = useState(0);
-  const [level, setLevel] = useState(1);
+  const [hud, setHud] = useState<TetrisHudState>(createInitialHud);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [initials, setInitials] = useState<string | null>(null);
@@ -48,18 +56,21 @@ export function TetrisPlayer({ game }: TetrisPlayerProps) {
     setInitials((prev) => prev ?? getDefaultPlayerName());
   }, [getDefaultPlayerName]);
 
-  const handleStateChange = useCallback(
-    (state: TetrisGameState) => {
-      setScore(state.score);
-      setLines(state.lines);
-      setLevel(state.level);
-      if (state.phase === "gameover") {
-        setOver(true);
-        prefillPlayerName();
-      }
-    },
-    [prefillPlayerName],
-  );
+  const prefillPlayerNameRef = useRef(prefillPlayerName);
+  useEffect(() => {
+    prefillPlayerNameRef.current = prefillPlayerName;
+  }, [prefillPlayerName]);
+
+  const handleStateChange = useCallback((state: TetrisGameState) => {
+    setHud((prev) => {
+      const next = tetrisHudFromGameState(state);
+      return tetrisHudEquals(prev, next) ? prev : next;
+    });
+    if (state.phase === "gameover") {
+      setOver(true);
+      prefillPlayerNameRef.current();
+    }
+  }, []);
 
   const endGame = () => {
     setOver(true);
@@ -92,7 +103,7 @@ export function TetrisPlayer({ game }: TetrisPlayerProps) {
     const result = await saveScore({
       gameId: game.id,
       playerName: initials ?? getDefaultPlayerName(),
-      score,
+      score: hud.score,
     });
 
     if (result.ok) {
@@ -107,10 +118,10 @@ export function TetrisPlayer({ game }: TetrisPlayerProps) {
     <GamePlayerShell
       game={game}
       playerName={playerName}
-      score={score}
+      score={hud.score}
       lives={0}
-      level={level}
-      lines={lines}
+      level={hud.level}
+      lines={hud.lines}
       hideLives
       paused={paused}
       over={over}

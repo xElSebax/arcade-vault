@@ -1,4 +1,5 @@
 import { H, TRIPLE_SPREAD, W } from "../constants";
+import type { AsteroidsRenderCache } from "../render-cache";
 import type { AsteroidsSkinTokens } from "../skins";
 import { rand, wrap } from "../utils";
 import { Bullet } from "./bullet";
@@ -95,9 +96,35 @@ export class Ship {
     return [new Bullet(ox, oy, this.angle)];
   }
 
-  draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
+  draw(
+    ctx: CanvasRenderingContext2D,
+    tokens: AsteroidsSkinTokens,
+    cache?: AsteroidsRenderCache,
+  ): void {
     if (this.dead) return;
     if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0) return;
+
+    if (tokens.glowBlur) {
+      const usedCache = cache?.drawShipGlow(ctx, this.x, this.y, this.angle);
+      if (!usedCache) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.strokeStyle = tokens.ship;
+        ctx.lineWidth = 1.5;
+        ctx.lineJoin = "round";
+        ctx.shadowBlur = tokens.glowBlur;
+        ctx.shadowColor = tokens.ship;
+        ctx.beginPath();
+        ctx.moveTo(20, 0);
+        ctx.lineTo(-12, -9);
+        ctx.lineTo(-7, 0);
+        ctx.lineTo(-12, 9);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
 
     ctx.save();
     ctx.translate(this.x, this.y);
@@ -105,26 +132,13 @@ export class Ship {
     ctx.strokeStyle = tokens.ship;
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
-
-    const strokeShip = (): void => {
-      ctx.beginPath();
-      ctx.moveTo(20, 0);
-      ctx.lineTo(-12, -9);
-      ctx.lineTo(-7, 0);
-      ctx.lineTo(-12, 9);
-      ctx.closePath();
-      ctx.stroke();
-    };
-
-    if (tokens.glowBlur) {
-      ctx.shadowBlur = tokens.glowBlur;
-      ctx.shadowColor = tokens.ship;
-      strokeShip();
-      ctx.shadowBlur = 0;
-      strokeShip();
-    } else {
-      strokeShip();
-    }
+    ctx.beginPath();
+    ctx.moveTo(20, 0);
+    ctx.lineTo(-12, -9);
+    ctx.lineTo(-7, 0);
+    ctx.lineTo(-12, 9);
+    ctx.closePath();
+    ctx.stroke();
 
     if (this.thrusting && Math.random() > 0.35) {
       ctx.strokeStyle = tokens.shipThrust;
@@ -132,7 +146,7 @@ export class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      if (tokens.glowBlur) {
+      if (tokens.glowBlur && !cache) {
         ctx.shadowBlur = tokens.glowBlur * 0.6;
         ctx.shadowColor = tokens.shipThrust;
       }

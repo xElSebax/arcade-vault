@@ -14,6 +14,7 @@ import {
   type TouchAction,
   type VirtualInputState,
 } from "@/lib/games/touch-controls/types";
+import { createTetrisRenderCache } from "./render-cache";
 import type { TetrisEngine, TetrisGameState, TetrisPhase } from "./types";
 import { collide, drawBlock, ghostY } from "./utils";
 
@@ -46,6 +47,7 @@ export function createTetrisEngine(): TetrisEngine {
   let currentSkin: GameSkinId = DEFAULT_GAME_SKIN;
 
   const stateListeners = new Set<(state: TetrisGameState) => void>();
+  const renderCache = createTetrisRenderCache();
 
   function tokens() {
     return TETRIS_SKINS[currentSkin];
@@ -82,34 +84,16 @@ export function createTetrisEngine(): TetrisEngine {
     }
   }
 
-  function drawGrid(context: CanvasRenderingContext2D): void {
-    const skin = tokens();
-    context.strokeStyle = skin.grid;
-    context.lineWidth = skin.gridLineWidth ?? 0.5;
-    for (let c = 1; c < COLS; c++) {
-      context.beginPath();
-      context.moveTo(c * BLOCK, 0);
-      context.lineTo(c * BLOCK, ROWS * BLOCK);
-      context.stroke();
-    }
-    for (let r = 1; r < ROWS; r++) {
-      context.beginPath();
-      context.moveTo(0, r * BLOCK);
-      context.lineTo(COLS * BLOCK, r * BLOCK);
-      context.stroke();
-    }
-  }
-
   function drawBoard(): void {
     if (!ctx || !boardCanvas) return;
 
     const skin = tokens();
-    clearCanvas(ctx, boardCanvas);
-    drawGrid(ctx);
+    renderCache.ensure(currentSkin, skin);
+    renderCache.blitStaticBoard(ctx);
 
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
-        drawBlock(ctx, c, r, play.board[r][c], BLOCK, skin);
+        drawBlock(ctx, c, r, play.board[r][c], BLOCK, skin, undefined, renderCache);
       }
     }
 
@@ -126,6 +110,7 @@ export function createTetrisEngine(): TetrisEngine {
               BLOCK,
               skin,
               skin.ghostAlpha,
+              renderCache,
             );
           }
         }
@@ -140,6 +125,8 @@ export function createTetrisEngine(): TetrisEngine {
             play.current.shape[r][c],
             BLOCK,
             skin,
+            undefined,
+            renderCache,
           );
         }
       }
@@ -156,7 +143,16 @@ export function createTetrisEngine(): TetrisEngine {
     const offY = Math.floor((4 - shape.length) / 2);
     for (let r = 0; r < shape.length; r++) {
       for (let c = 0; c < shape[r].length; c++) {
-        drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NEXT_BLOCK, skin);
+        drawBlock(
+          nextCtx,
+          offX + c,
+          offY + r,
+          shape[r][c],
+          NEXT_BLOCK,
+          skin,
+          undefined,
+          renderCache,
+        );
       }
     }
   }
@@ -346,6 +342,7 @@ export function createTetrisEngine(): TetrisEngine {
 
     unmount(): void {
       stopLoop();
+      renderCache.invalidate();
       window.removeEventListener("keydown", onKeyDown);
       boardCanvas = null;
       nextCanvas = null;

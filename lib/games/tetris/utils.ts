@@ -1,4 +1,5 @@
 import { COLS, ROWS } from "./constants";
+import type { TetrisRenderCache } from "./render-cache";
 import type { TetrisSkinTokens } from "./skins";
 
 export interface ActivePiece {
@@ -58,6 +59,7 @@ export function drawBlock(
   size: number,
   tokens: TetrisSkinTokens,
   alpha?: number,
+  renderCache?: TetrisRenderCache | null,
 ): void {
   if (!colorIndex) return;
   const color = tokens.colors[colorIndex];
@@ -71,10 +73,16 @@ export function drawBlock(
   ctx.globalAlpha = alpha ?? 1;
 
   if (tokens.glowBlur && !isGhost) {
-    ctx.shadowColor = color;
-    ctx.shadowBlur = tokens.glowBlur;
-    ctx.fillStyle = color;
-    ctx.fillRect(px, py, blockSize, blockSize);
+    const usedCache =
+      renderCache?.drawBlockGlow(ctx, px, py, colorIndex, size) ?? false;
+    if (!usedCache) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = tokens.glowBlur;
+      ctx.fillStyle = color;
+      ctx.fillRect(px, py, blockSize, blockSize);
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = "transparent";
+    }
   }
 
   ctx.shadowBlur = 0;
