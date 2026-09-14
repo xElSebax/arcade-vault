@@ -1,0 +1,74 @@
+---
+description: Audits Next.js app and Supabase security (RLS, auth, headers, proxy, actions) against SPEC 12/13. Maintains references/security/audit-log.md. Report-only by default. Use with @security-auditor [full|db|app|dashboard|delta].
+alwaysApply: false
+---
+
+# /security-auditor — App + Supabase security audit
+
+This rule triggers the **security-auditor** skill. Read `.claude/skills/security-auditor/SKILL.md` and follow it strictly.
+
+## What this does
+
+- Takes a **mode**: `full` (default), `db`, `app`, `dashboard`, or `delta`
+- Audits against SPEC 12, SPEC 13, `references/security/checklist.md`, and the skill checklists
+- Optionally checks Supabase security advisors via MCP when available
+- **Report only by default** — no code, migration, or dashboard changes unless the human explicitly requests fixes
+- Updates memory in `references/security/audit-log.md`
+
+## What this does NOT do
+
+- Implement fixes or write migrations by default
+- Mark specs as `Aprobado` or write new specs (recommend `@spec` for new scope)
+- Replace pentest or compliance certification
+- Audit game canvas mechanics unless tied to scores/auth
+
+## Supporting files
+
+- `.claude/skills/security-auditor/SKILL.md` — six-phase workflow and hard rules
+- `.claude/skills/security-auditor/app-security-checklist.md` — Next.js, proxy, auth, actions, APIs
+- `.claude/skills/security-auditor/db-security-checklist.md` — RLS, functions, migrations, advisors
+- `specs/12-auth-supabase.md` — auth and profiles model
+- `specs/13-security-hardening.md` — hardening baseline
+- `references/security/checklist.md` — operational checklist
+- `references/security/audit-log.md` — audit inventory (read at start, update at end)
+- `references/supabase-auth-setup.md` — dashboard Auth and advisor steps
+
+## Workflow summary
+
+1. **Context** — read specs, checklist, audit-log, checklists, sensitive code paths
+2. **Confirm mode** — from argument or default `full`
+3. **Audit repo** — walk checklists read-only (or delta on git diff)
+4. **Advisors** — Supabase MCP if available; else manual follow-up
+5. **Report** — findings table + checklist summary
+6. **Persist** — update snapshot + append session in `audit-log.md`, then **STOP**
+
+## Subagent
+
+For a clean context, delegate to [`.cursor/agents/security-auditor.md`](.cursor/agents/security-auditor.md) when the user explicitly asks for the `@security-auditor` subagent.
+
+## Example invocations
+
+```
+@security-auditor
+@security-auditor full
+@security-auditor db
+@security-auditor app
+@security-auditor dashboard
+@security-auditor delta
+```
+
+## When to invoke
+
+- After auth, Supabase, or API changes
+- Before production deploy
+- Periodic regression (`full`)
+- After Auth dashboard changes (`dashboard`)
+
+## Handoff
+
+| Finding type | Next step |
+|--------------|-----------|
+| New capability (CSP, rate limit, 2FA) | `@spec` |
+| Approved spec | `@spec-impl` |
+| Explicit fix request | Implement in same thread when user asks |
+| Generic PR review | `/review-security` (complement, not replacement) |

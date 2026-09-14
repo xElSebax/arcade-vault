@@ -1,5 +1,7 @@
 # Checklist de seguridad básico (SPEC 13)
 
+Regresiones y sesiones de auditoría: [`audit-log.md`](audit-log.md) (actualizado por `@security-auditor`).
+
 SPEC 13 **Implementado** (rama `spec-13-security-hardening`). Ítems de repo verificados; dashboard Auth validado en operación.
 
 ## Repositorio y Next.js
