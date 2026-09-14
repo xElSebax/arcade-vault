@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Btn } from "@/components/btn";
+import { useAuth } from "@/components/providers/auth-provider";
 import { buildAuthCallbackUrl } from "@/lib/auth/callback-url";
 import { normalizePlayerName } from "@/lib/player-name";
 import { createClient } from "@/lib/supabase/client";
@@ -49,6 +50,7 @@ function callbackFeedbackFromParams(errorKey: string | null): Feedback | null {
 
 function AuthPageContent() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const callbackError = searchParams.get("error");
   const supabase = useMemo(() => createClient(), []);
@@ -69,6 +71,12 @@ function AuthPageContent() {
       router.replace("/auth", { scroll: false });
     }
   }, [callbackError, router]);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/games");
+    }
+  }, [authLoading, user, router]);
 
   const clearFeedback = () => setFeedback(null);
 
@@ -239,6 +247,14 @@ function AuthPageContent() {
   };
 
   const formDisabled = busy || oauthBusy !== null;
+
+  if (authLoading || user) {
+    return (
+      <div className="av-auth-wrap fade-in">
+        <div className="auth-card" aria-busy="true" aria-label="Redirigiendo…" />
+      </div>
+    );
+  }
 
   return (
     <div className="av-auth-wrap fade-in">
