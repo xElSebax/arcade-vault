@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   fetchLeaderboardForGame,
   fetchPlayerBestForGame,
+  fetchPlayerBestForGameByUserId,
 } from "@/app/actions/leaderboard";
 import { GAMES, seededScores, type ScoreRow } from "@/app/data";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -12,7 +13,7 @@ import { isSupabaseGame } from "@/lib/data/supabase-games";
 import { normalizePlayerName, usePlayerName } from "@/lib/player-name";
 
 export default function HallOfFamePage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const storedName = usePlayerName();
   const [tab, setTab] = useState(GAMES[0].id);
   const [supabaseRows, setSupabaseRows] = useState<ScoreRow[]>([]);
@@ -30,6 +31,23 @@ export default function HallOfFamePage() {
   const displayName =
     storedName ?? (user?.displayName ? normalizePlayerName(user.displayName) : null);
 
+  const youLabel =
+    user?.displayName != null
+      ? normalizePlayerName(user.displayName)
+      : displayName;
+
+  const mockPersonalBest = useMemo(() => {
+    if (usesSupabase || !displayName) {
+      return null;
+    }
+    const seedRows = seededScores(tab.length * 23 + displayName.length, 12);
+    return {
+      rank: 8 + (tab.length % 4),
+      score: (seedRows[5]?.score ?? 12400) - 2400,
+      date: "11/05/2026",
+    };
+  }, [usesSupabase, displayName, tab]);
+
   const handleTabChange = (gameId: string) => {
     if (gameId !== tab && isSupabaseGame(gameId)) {
       setSupabaseRows([]);
@@ -37,9 +55,6 @@ export default function HallOfFamePage() {
     }
     setTab(gameId);
   };
-
-  const youRank = user ? Math.floor(8 + (tab.length % 4)) : null;
-  const youScore = user ? mockRows[5]?.score - 2400 : null;
 
   useEffect(() => {
     if (!usesSupabase) {
@@ -60,29 +75,47 @@ export default function HallOfFamePage() {
   }, [tab, usesSupabase]);
 
   useEffect(() => {
-    if (!usesSupabase || !displayName) {
+    if (!usesSupabase || authLoading) {
       return;
     }
 
     let cancelled = false;
 
-    fetchPlayerBestForGame(tab, displayName).then((data) => {
-      if (!cancelled) {
-        setPlayerBest(data);
+    const loadPlayerBest = async () => {
+      if (user?.id) {
+        const byUser = await fetchPlayerBestForGameByUserId(tab, user.id);
+        if (!cancelled) {
+          setPlayerBest(byUser);
+        }
+        return;
       }
-    });
+
+      if (!displayName) {
+        if (!cancelled) {
+          setPlayerBest(null);
+        }
+        return;
+      }
+
+      const byName = await fetchPlayerBestForGame(tab, displayName);
+      if (!cancelled) {
+        setPlayerBest(byName);
+      }
+    };
+
+    void loadPlayerBest();
 
     return () => {
       cancelled = true;
     };
-  }, [tab, usesSupabase, displayName]);
+  }, [tab, usesSupabase, authLoading, user?.id, displayName]);
 
   if (!game) {
     return null;
   }
 
-  const showSupabaseYouRow = usesSupabase && displayName && playerBest;
-  const showMockYouRow = !usesSupabase && user;
+  const showSupabaseYouRow = usesSupabase && playerBest && (user?.id || displayName);
+  const showMockYouRow = !usesSupabase && mockPersonalBest && youLabel;
 
   return (
     <div className="av-hall fade-in">
@@ -175,7 +208,7 @@ export default function HallOfFamePage() {
                 #{String(playerBest.rank).padStart(2, "0")}
               </div>
               <div className="pl" style={{ color: "var(--yellow)" }}>
-                {displayName}
+                {youLabel}
               </div>
               <div
                 className="sc"
@@ -200,10 +233,10 @@ export default function HallOfFamePage() {
               style={{ animationDelay: `${rows.length * 50 + 50}ms` }}
             >
               <div className="rk" style={{ color: "var(--yellow)" }}>
-                #{String(youRank).padStart(2, "0")}
+                #{String(mockPersonalBest.rank).padStart(2, "0")}
               </div>
               <div className="pl" style={{ color: "var(--yellow)" }}>
-                {displayName ?? user?.displayName ?? "TÚ"}
+                {youLabel}
               </div>
               <div
                 className="sc"
@@ -212,9 +245,9 @@ export default function HallOfFamePage() {
                   textShadow: "0 0 6px rgba(245,255,0,0.5)",
                 }}
               >
-                {(youScore || 9999).toLocaleString("es-ES")}
+                {mockPersonalBest.score.toLocaleString("es-ES")}
               </div>
-              <div className="dt">11/05/2026</div>
+              <div className="dt">{mockPersonalBest.date}</div>
             </div>
           </>
         )}
