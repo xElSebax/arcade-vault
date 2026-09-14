@@ -1,4 +1,5 @@
 import { RADII, SPEEDS, H, W } from "../constants";
+import type { AsteroidsRenderCache } from "../render-cache";
 import type { AsteroidsSkinTokens } from "../skins";
 import { rand, randInt, wrap } from "../utils";
 
@@ -54,34 +55,46 @@ export class Asteroid {
     ];
   }
 
-  draw(ctx: CanvasRenderingContext2D, tokens: AsteroidsSkinTokens): void {
+  draw(
+    ctx: CanvasRenderingContext2D,
+    tokens: AsteroidsSkinTokens,
+    cache?: AsteroidsRenderCache,
+  ): void {
+    if (tokens.glowBlur) {
+      const usedCache = cache?.drawAsteroidGlow(ctx, this, tokens);
+      if (!usedCache) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rot);
+        ctx.strokeStyle = tokens.asteroid;
+        ctx.lineWidth = 1.5;
+        ctx.lineJoin = "round";
+        ctx.shadowBlur = tokens.glowBlur;
+        ctx.shadowColor = tokens.asteroid;
+        ctx.beginPath();
+        ctx.moveTo(this.verts[0][0], this.verts[0][1]);
+        for (let i = 1; i < this.verts.length; i++) {
+          ctx.lineTo(this.verts[i][0], this.verts[i][1]);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rot);
     ctx.strokeStyle = tokens.asteroid;
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
-
-    const strokeAsteroid = (): void => {
-      ctx.beginPath();
-      ctx.moveTo(this.verts[0][0], this.verts[0][1]);
-      for (let i = 1; i < this.verts.length; i++) {
-        ctx.lineTo(this.verts[i][0], this.verts[i][1]);
-      }
-      ctx.closePath();
-      ctx.stroke();
-    };
-
-    if (tokens.glowBlur) {
-      ctx.shadowBlur = tokens.glowBlur;
-      ctx.shadowColor = tokens.asteroid;
-      strokeAsteroid();
-      ctx.shadowBlur = 0;
-      strokeAsteroid();
-    } else {
-      strokeAsteroid();
+    ctx.beginPath();
+    ctx.moveTo(this.verts[0][0], this.verts[0][1]);
+    for (let i = 1; i < this.verts.length; i++) {
+      ctx.lineTo(this.verts[i][0], this.verts[i][1]);
     }
-
+    ctx.closePath();
+    ctx.stroke();
     ctx.restore();
   }
 }

@@ -1,15 +1,19 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { saveScore } from "@/app/actions/save-score";
 import type { Game } from "@/app/data";
 import { GamePlayerShell } from "@/components/game-player-shell";
 import { ArkanoidCanvas } from "@/components/games/arkanoid-canvas";
 import { VirtualGameControls } from "@/components/virtual-game-controls";
 import { useAuth } from "@/components/providers/auth-provider";
-import type {
-  ArkanoidEngine,
-  ArkanoidGameState,
+import { STARTING_LIVES } from "@/lib/games/arkanoid/constants";
+import {
+  arkanoidHudEquals,
+  arkanoidHudFromGameState,
+  type ArkanoidEngine,
+  type ArkanoidGameState,
+  type ArkanoidHudState,
 } from "@/lib/games/arkanoid/types";
 import { useTouchPlayMode } from "@/lib/games/touch-controls/detect-touch-mode";
 import { TOUCH_MAPS } from "@/lib/games/touch-controls/maps";
@@ -24,6 +28,10 @@ interface ArkanoidPlayerProps {
   game: Game;
 }
 
+function createInitialHud(): ArkanoidHudState {
+  return { score: 0, lives: STARTING_LIVES, level: 1 };
+}
+
 export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
   const { user } = useAuth();
   const storedName = usePlayerName();
@@ -31,9 +39,7 @@ export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
   const touchMode = useTouchPlayMode();
   const engineRef = useRef<ArkanoidEngine | null>(null);
 
-  const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(3);
-  const [level, setLevel] = useState(1);
+  const [hud, setHud] = useState<ArkanoidHudState>(createInitialHud);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [won, setWon] = useState(false);
@@ -52,23 +58,27 @@ export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
     setInitials((prev) => prev ?? getDefaultPlayerName());
   }, [getDefaultPlayerName]);
 
-  const handleStateChange = useCallback(
-    (state: ArkanoidGameState) => {
-      setScore(state.score);
-      setLives(state.lives);
-      setLevel(state.level);
-      if (state.phase === "gameover") {
-        setOver(true);
-        setWon(false);
-        prefillPlayerName();
-      } else if (state.phase === "win") {
-        setOver(true);
-        setWon(true);
-        prefillPlayerName();
-      }
-    },
-    [prefillPlayerName],
-  );
+  const prefillPlayerNameRef = useRef(prefillPlayerName);
+  useEffect(() => {
+    prefillPlayerNameRef.current = prefillPlayerName;
+  }, [prefillPlayerName]);
+
+  const handleStateChange = useCallback((state: ArkanoidGameState) => {
+    setHud((prev) => {
+      const next = arkanoidHudFromGameState(state);
+      return arkanoidHudEquals(prev, next) ? prev : next;
+    });
+
+    if (state.phase === "gameover") {
+      setOver(true);
+      setWon(false);
+      prefillPlayerNameRef.current();
+    } else if (state.phase === "win") {
+      setOver(true);
+      setWon(true);
+      prefillPlayerNameRef.current();
+    }
+  }, []);
 
   const endGame = () => {
     setOver(true);
@@ -102,7 +112,7 @@ export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
     const result = await saveScore({
       gameId: game.id,
       playerName: initials ?? getDefaultPlayerName(),
-      score,
+      score: hud.score,
     });
 
     if (result.ok) {
@@ -117,9 +127,9 @@ export function ArkanoidPlayer({ game }: ArkanoidPlayerProps) {
     <GamePlayerShell
       game={game}
       playerName={playerName}
-      score={score}
-      lives={lives}
-      level={level}
+      score={hud.score}
+      lives={hud.lives}
+      level={hud.level}
       paused={paused}
       over={over}
       won={won}

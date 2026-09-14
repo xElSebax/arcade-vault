@@ -1,11 +1,5 @@
 import {
-  BLOCK_COLS,
-  BLOCK_H,
-  BLOCK_ROWS,
   BLOCK_SCORE,
-  BLOCKS_ORIGIN_X,
-  BLOCKS_ORIGIN_Y,
-  BLOCK_W,
   EXPLOSION_DURATION,
   H,
   MAX_DT,
@@ -40,6 +34,7 @@ import {
   playSound,
   unlockSounds,
 } from "./sounds";
+import { createArkanoidRenderCache } from "./render-cache";
 import {
   drawFrame,
   drawSprite,
@@ -61,6 +56,7 @@ import type { ArkanoidSkinTokens } from "./skins";
 import { clamp, collideAABB } from "./utils";
 
 export function createArkanoidEngine(): ArkanoidEngine {
+  const renderCache = createArkanoidRenderCache();
   let canvas: HTMLCanvasElement | null = null;
   let ctx: CanvasRenderingContext2D | null = null;
   let rafId: number | null = null;
@@ -84,44 +80,6 @@ export function createArkanoidEngine(): ArkanoidEngine {
 
   function tokens() {
     return ARKANOID_SKINS[currentSkin];
-  }
-
-  function drawGrid(
-    context: CanvasRenderingContext2D,
-    color: string,
-    alpha = 0.35,
-  ): void {
-    context.strokeStyle = color;
-    context.lineWidth = 1;
-    context.globalAlpha = alpha;
-
-    for (let col = 0; col <= BLOCK_COLS; col++) {
-      const x = BLOCKS_ORIGIN_X + col * BLOCK_W;
-      context.beginPath();
-      context.moveTo(x, BLOCKS_ORIGIN_Y);
-      context.lineTo(x, BLOCKS_ORIGIN_Y + BLOCK_ROWS * BLOCK_H);
-      context.stroke();
-    }
-
-    for (let row = 0; row <= BLOCK_ROWS; row++) {
-      const y = BLOCKS_ORIGIN_Y + row * BLOCK_H;
-      context.beginPath();
-      context.moveTo(BLOCKS_ORIGIN_X, y);
-      context.lineTo(BLOCKS_ORIGIN_X + BLOCK_COLS * BLOCK_W, y);
-      context.stroke();
-    }
-
-    context.globalAlpha = 1;
-  }
-
-  function drawScanlines(
-    context: CanvasRenderingContext2D,
-    alpha: number,
-  ): void {
-    context.fillStyle = `rgba(0, 0, 0, ${alpha})`;
-    for (let y = 0; y < H; y += 2) {
-      context.fillRect(0, y, W, 1);
-    }
   }
 
   function blockFilter(tokens: ArkanoidSkinTokens, color: BlockColor): string {
@@ -271,12 +229,8 @@ export function createArkanoidEngine(): ArkanoidEngine {
     const context = ctx;
     const t = tokens();
 
-    context.fillStyle = t.background;
-    context.fillRect(0, 0, W, H);
-
-    if (t.grid) {
-      drawGrid(context, t.grid, t.gridAlpha ?? 0.35);
-    }
+    renderCache.ensure(context, currentSkin, t);
+    renderCache.blitStaticLayer(context);
 
     for (const block of blocks) {
       if (block.alive) {
@@ -297,51 +251,67 @@ export function createArkanoidEngine(): ArkanoidEngine {
         Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4),
         3,
       );
-      drawFrame(
-        context,
-        EXPLOSION_FRAMES[exp.color][frameIndex],
-        exp.x,
-        exp.y,
-        exp.w,
-        exp.h,
-        {
-          filter: blockFilter(t, exp.color),
-          glowBlur: t.explosionGlowBlur,
-          glowColor:
-            t.explosionGlowColors?.[exp.color] ?? t.entityGlowColor,
-        },
-      );
+      const explosionKey = `explosion:${exp.color}:${frameIndex}` as const;
+      const explosionGlow = t.explosionGlowBlur;
+      if (
+        explosionGlow &&
+        renderCache.drawGlow(context, explosionKey, exp.x, exp.y)
+      ) {
+        drawFrame(
+          context,
+          EXPLOSION_FRAMES[exp.color][frameIndex],
+          exp.x,
+          exp.y,
+          exp.w,
+          exp.h,
+          { filter: blockFilter(t, exp.color) },
+        );
+      } else {
+        drawFrame(
+          context,
+          EXPLOSION_FRAMES[exp.color][frameIndex],
+          exp.x,
+          exp.y,
+          exp.w,
+          exp.h,
+          {
+            filter: blockFilter(t, exp.color),
+            glowBlur: t.explosionGlowBlur,
+            glowColor:
+              t.explosionGlowColors?.[exp.color] ?? t.entityGlowColor,
+          },
+        );
+      }
     }
 
-    drawSprite(
-      context,
-      "paddle",
-      paddle.x,
-      paddle.y,
-      paddle.w,
-      paddle.h,
-      {
+    const paddleGlow = t.paddleGlowBlur ?? t.entityGlowBlur;
+    if (paddleGlow && renderCache.drawGlow(context, "paddle", paddle.x, paddle.y)) {
+      drawSprite(context, "paddle", paddle.x, paddle.y, paddle.w, paddle.h, {
         filter: t.spriteFilter,
-        glowBlur: t.paddleGlowBlur ?? t.entityGlowBlur,
+      });
+    } else {
+      drawSprite(context, "paddle", paddle.x, paddle.y, paddle.w, paddle.h, {
+        filter: t.spriteFilter,
+        glowBlur: paddleGlow,
         glowColor: t.paddleGlowColor ?? t.entityGlowColor,
-      },
-    );
-    drawSprite(
-      context,
-      "ball",
-      ball.x,
-      ball.y,
-      ball.w,
-      ball.h,
-      {
+      });
+    }
+
+    const ballGlow = t.ballGlowBlur ?? t.entityGlowBlur;
+    if (ballGlow && renderCache.drawGlow(context, "ball", ball.x, ball.y)) {
+      drawSprite(context, "ball", ball.x, ball.y, ball.w, ball.h, {
         filter: t.spriteFilter,
-        glowBlur: t.ballGlowBlur ?? t.entityGlowBlur,
+      });
+    } else {
+      drawSprite(context, "ball", ball.x, ball.y, ball.w, ball.h, {
+        filter: t.spriteFilter,
+        glowBlur: ballGlow,
         glowColor: t.ballGlowColor ?? t.entityGlowColor,
-      },
-    );
+      });
+    }
 
     if (t.scanlineAlpha) {
-      drawScanlines(context, t.scanlineAlpha);
+      renderCache.drawScanlines(context);
     }
   }
 
@@ -421,6 +391,7 @@ export function createArkanoidEngine(): ArkanoidEngine {
       }
 
       disposeSounds();
+      renderCache.invalidate();
 
       canvas = null;
       ctx = null;
@@ -458,6 +429,7 @@ export function createArkanoidEngine(): ArkanoidEngine {
 
     setSkin(skin: GameSkinId): void {
       currentSkin = skin;
+      renderCache.invalidate();
       if (mounted && spritesReady) {
         draw();
       }
