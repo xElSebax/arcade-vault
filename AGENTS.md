@@ -4,7 +4,7 @@ Este archivo es la memoria persistente del proyecto. Cursor lo lee al inicio de 
 
 ## Qué es este proyecto
 
-**Arcade Vault** es una plataforma web retro para jugar online y competir por la mayor cantidad de puntos. La app ya tiene UI completa (landing, biblioteca, detalle de juego, reproductor CRT, salón de la fama, about/contacto y auth mock), cuatro juegos jugables con engine TypeScript y leaderboard real en Supabase, y el resto del catálogo como placeholders visuales.
+**Arcade Vault** es una plataforma web retro para jugar online y competir por la mayor cantidad de puntos. La app ya tiene UI completa (landing, biblioteca, detalle de juego, reproductor CRT, salón de la fama, about/contacto y auth mock), **cinco** juegos jugables con engine TypeScript y leaderboard real en Supabase, y el resto del catálogo como placeholders visuales.
 
 ## Stack técnico
 
@@ -36,8 +36,10 @@ Este archivo es la memoria persistente del proyecto. Cursor lo lee al inicio de 
 
 Inventario completo en [`references/implemented-games.md`](references/implemented-games.md).
 
-- **4 jugables** — `asteroids`, `tetris`, `arkanoid`, `snake`: engine TypeScript, rutas estáticas, leaderboard Supabase.
+- **5 jugables** — `asteroids`, `tetris`, `arkanoid`, `snake`, `frogger`: engine TypeScript, rutas estáticas, leaderboard Supabase. Skins (classic/retro/neon), touch móvil y pasada de rendimiento aplicados en los cinco.
 - **8 placeholders** — resto del catálogo en `app/data/games.ts`: ficha y reproductor mock vía `/games/[id]` y `/play/[id]`.
+
+`frogger` se integró vía `@game-jam` (variante en [`specs/game-jam/frogger/01-frogger-classic.md`](specs/game-jam/frogger/01-frogger-classic.md)); no hay `specs/NN-frogger.md` promovido en la raíz de `specs/`.
 
 Registros centrales: `app/data/static-game-routes.ts` (rutas estáticas) y `lib/data/supabase-games.ts` (leaderboard real).
 
@@ -76,127 +78,31 @@ supabase/migrations/                 # Seed del juego en tabla games
 @game-jam {tema} → revisar variantes en specs/game-jam/{slug}/ → elegir una → promover a specs/NN-{slug}.md → Aprobado → @spec-impl-game NN-slug
 ```
 
-## Agente `@game-jam`
+## Agentes y flujos spec
 
-Genera specs completos de juegos retro a partir de un **tema creativo** o un **juego nombrado** (p. ej. Frogger). Propone variantes de gameplay y escribe al menos 2 archivos de spec listos para revisión.
+Invocar con `@nombre` en Cursor o `/nombre` en Claude Code. Skills en [`.claude/skills/`](.claude/skills/) (espejo [`.agents/skills/`](.agents/skills/)). Los subagentes con contexto limpio viven en [`.cursor/agents/`](.cursor/agents/); el resto se activa vía regla [`.cursor/rules/`](.cursor/rules/).
 
-| Aspecto | Detalle |
-|---------|---------|
-| Invocación | `@game-jam` o `/game-jam` · argumento: tema (`océano`) o juego concreto (`Frogger`) |
-| Subagente (contexto limpio) | [`.cursor/agents/game-jam.md`](.cursor/agents/game-jam.md) — delegar cuando el usuario pida explícitamente el agente `@game-jam` |
-| Modo juego nombrado | Mismo `id` en todas las variantes (`frogger`); archivos `01-{id}-{hook}.md`, `02-{id}-{hook}.md`; carpeta `specs/game-jam/{id}/` |
-| Modo solo tema | Slugs de catálogo distintos por variante; carpeta con nombre creativo |
-| Skill | [`.claude/skills/game-jam/SKILL.md`](.claude/skills/game-jam/SKILL.md) |
-| Guía de temas | [`.claude/skills/game-jam/theme-guide.md`](.claude/skills/game-jam/theme-guide.md) |
-| Plantilla | [`.claude/skills/game-jam/template.md`](.claude/skills/game-jam/template.md) |
-| Memoria | [`references/game-jam/sessions-log.md`](references/game-jam/sessions-log.md) — log versionado en git |
-| Regla Cursor | [`.cursor/rules/game-jam.mdc`](.cursor/rules/game-jam.mdc) |
-| Salida | `specs/game-jam/{folder-slug}/` con `README.md` + ≥2 specs completos |
+| Invocación | Qué hace | Definición |
+|------------|----------|------------|
+| `@game-planner` | Rankea candidatos retro antes de un spec; memoria en `references/game-planner/`. No escribe specs ni código. | [`.cursor/agents/game-planner.md`](.cursor/agents/game-planner.md) |
+| `@game-jam` | Genera ≥2 variantes de spec temático en `specs/game-jam/`; no implementa. | [`.cursor/agents/game-jam.md`](.cursor/agents/game-jam.md) |
+| `@add-game` | Spec unificado de integración + leaderboard (extiende `@spec`); solo estado `Borrador`. | [`.cursor/rules/add-game.mdc`](.cursor/rules/add-game.mdc) |
+| `@spec` | Diseña specs genéricos antes de escribir código. | [`.cursor/rules/spec.mdc`](.cursor/rules/spec.mdc) |
+| `@spec-impl` | Implementa un spec en estado `Aprobado` (features no juego). | [`.cursor/rules/spec-impl.mdc`](.cursor/rules/spec-impl.mdc) |
+| `@spec-impl-game` | Implementa juego aprobado y encadena skins, touch móvil y rendimiento. | [`.cursor/rules/spec-impl-game.mdc`](.cursor/rules/spec-impl-game.mdc) |
+| `@skin-designer` | Skins classic / retro / neon para un jugable; inventario en `references/skin-designer/`. | [`.cursor/agents/skin-designer.md`](.cursor/agents/skin-designer.md) |
+| `@mobile-porter` | Touch play y layout CRT móvil por jugable (SPEC 10). | [`.cursor/agents/mobile-porter.md`](.cursor/agents/mobile-porter.md) |
+| `@game-performance-booster` | FPS, HUD React y draw canvas por jugable (SPEC 11). | [`.cursor/agents/game-performance-booster.md`](.cursor/agents/game-performance-booster.md) |
 
-**Qué hace:** interpreta el tema, propone ≥2 variantes con encaje distinto, escribe specs al nivel de `specs/07-tetris.md` tras confirmación del usuario; registra la sesión en el log.
-
-**Qué no hace:** no escribe código, migraciones ni branches. No marca specs como `Aprobado`. Tras elegir variante, el humano promueve el archivo a `specs/NN-{slug}.md` y ejecuta `@spec-impl-game`.
-
-**Estados en el log:** `generado` · `elegido` · `promovido` · `descartado`
-
-## Agente `@game-planner`
-
-Evalúa qué juegos retro canvas encajan en Arcade Vault **antes** de escribir un spec. Piensa, rankea candidatos y mantiene memoria de lo ya sugerido.
-
-| Aspecto | Detalle |
-|---------|---------|
-| Invocación | `@game-planner` o `/game-planner` · argumento opcional: criterios (p. ej. `shooter bajo esfuerzo`) |
-| Subagente (contexto limpio) | [`.cursor/agents/game-planner.md`](.cursor/agents/game-planner.md) — delegar cuando el usuario pida explícitamente el agente `@game-planner` |
-| Skill | [`.claude/skills/game-planner/SKILL.md`](.claude/skills/game-planner/SKILL.md) |
-| Criterios | [`.claude/skills/game-planner/criteria.md`](.claude/skills/game-planner/criteria.md) |
-| Memoria | [`references/game-planner/suggestions-log.md`](references/game-planner/suggestions-log.md) — log versionado en git |
-| Regla Cursor | [`.cursor/rules/game-planner.mdc`](.cursor/rules/game-planner.mdc) |
-
-**Qué hace:** lee catálogo, placeholders, prototipos y el log de sugerencias; propone 3–5 candidatos con puntuación de encaje (1–10); registra cada sesión en el log.
-
-**Qué no hace:** no escribe specs, código, migraciones ni branches. Si el usuario elige un juego, hace handoff a `@add-game {slug}`.
-
-**Estados en el log:** `sugerido` · `descartado` · `en_spec` · `implementado` · `revisitado`
-
-## Agente `@skin-designer`
-
-Configura los tres skins visuales (**classic**, **retro**, **neon**) para **un juego jugable a la vez**. Mantiene el inventario en `references/skin-designer/game-with-themes.md`.
-
-| Aspecto | Detalle |
-|---------|---------|
-| Invocación | `@skin-designer` o `/skin-designer` · argumento: slug del juego (`asteroids`, `tetris`, `arkanoid`, `snake`) |
-| Subagente (contexto limpio) | [`.cursor/agents/skin-designer.md`](.cursor/agents/skin-designer.md) — delegar cuando el usuario pida explícitamente el agente `@skin-designer` |
-| Skill | [`.claude/skills/skin-designer/SKILL.md`](.claude/skills/skin-designer/SKILL.md) |
-| Paletas | [`.claude/skills/skin-designer/palette-guide.md`](.claude/skills/skin-designer/palette-guide.md) |
-| Checklist dark mode | [`.claude/skills/skin-designer/dark-mode-checklist.md`](.claude/skills/skin-designer/dark-mode-checklist.md) |
-| Memoria | [`references/skin-designer/game-with-themes.md`](references/skin-designer/game-with-themes.md) — inventario versionado en git |
-| Regla Cursor | [`.cursor/rules/skin-designer.mdc`](.cursor/rules/skin-designer.mdc) |
-
-**Qué hace:** lee el inventario, confirma un solo juego por sesión, define tokens en `lib/games/{slug}/skins.ts`, implementa classic/retro/neon en el engine y wiring React, verifica contraste en fondo oscuro del CRT, actualiza la fila del juego en `game-with-themes.md`.
-
-**Qué no hace:** no aplica skins a todos los jugables de golpe; no marca specs como `Aprobado`; no toca placeholders salvo petición explícita.
-
-**Estados por skin en el inventario:** `pendiente` · `en_progreso` · `completo`
-
-## Agente `@mobile-porter`
-
-Audita y corrige la experiencia móvil (touch play + layout CRT) para **un juego jugable a la vez**. Mantiene el inventario en `references/mobile-porter/coverage-log.md`. Referencia canónica: SPEC 10.
-
-| Aspecto | Detalle |
-|---------|---------|
-| Invocación | `@mobile-porter` o `/mobile-porter` · argumento: slug del juego (`asteroids`, `tetris`, `arkanoid`, `snake`) |
-| Subagente (contexto limpio) | [`.cursor/agents/mobile-porter.md`](.cursor/agents/mobile-porter.md) — delegar cuando el usuario pida explícitamente el agente `@mobile-porter` |
-| Skill | [`.claude/skills/mobile-porter/SKILL.md`](.claude/skills/mobile-porter/SKILL.md) |
-| Guía de cableado | [`.claude/skills/mobile-porter/touch-integration-guide.md`](.claude/skills/mobile-porter/touch-integration-guide.md) |
-| Checklist | [`.claude/skills/mobile-porter/mobile-game-checklist.md`](.claude/skills/mobile-porter/mobile-game-checklist.md) |
-| Spec canónico | [`specs/10-controles-tactiles-movil.md`](specs/10-controles-tactiles-movil.md) |
-| Memoria | [`references/mobile-porter/coverage-log.md`](references/mobile-porter/coverage-log.md) — inventario versionado en git |
-| Regla Cursor | [`.cursor/rules/mobile-porter.mdc`](.cursor/rules/mobile-porter.mdc) |
-
-**Qué hace:** lee el inventario, confirma un solo juego por sesión, audita criterios de SPEC 10, corrige wiring/engine/CSS táctil si hay gaps, verifica desktop sin regresiones, actualiza la fila del juego en `coverage-log.md`.
-
-**Qué no hace:** no modifica landing/biblioteca/salón/about; no aplica touch a todos los jugables de golpe; no marca specs como `Aprobado`; no toca placeholders salvo petición explícita; no implementa PWA ni app nativa.
-
-**Estados por columna en el inventario:** `pendiente` · `en_progreso` · `completo` · `parcial`
-
-## Agente `@game-performance-booster`
-
-Audita y optimiza el rendimiento (FPS, HUD React, draw canvas, skins neon/retro) para **un juego jugable a la vez**. Mantiene el inventario en `references/game-performance-booster/coverage-log.md`. Referencia canónica: SPEC 11 y `references/performance-game-patterns.md`.
-
-| Aspecto | Detalle |
-|---------|---------|
-| Invocación | `@game-performance-booster` o `/game-performance-booster` · argumento: slug del juego (`frogger`, `asteroids`, `tetris`, `arkanoid`, `snake`) |
-| Subagente (contexto limpio) | [`.cursor/agents/game-performance-booster.md`](.cursor/agents/game-performance-booster.md) — delegar cuando el usuario pida explícitamente el agente `@game-performance-booster` |
-| Skill | [`.claude/skills/game-performance-booster/SKILL.md`](.claude/skills/game-performance-booster/SKILL.md) |
-| Checklist | [`.claude/skills/game-performance-booster/performance-checklist.md`](.claude/skills/game-performance-booster/performance-checklist.md) |
-| Protocolo de medición | [`.claude/skills/game-performance-booster/measurement-protocol.md`](.claude/skills/game-performance-booster/measurement-protocol.md) |
-| Spec canónico (patrón) | [`specs/11-rendimiento-frogger.md`](specs/11-rendimiento-frogger.md) |
-| Patrones reutilizables | [`references/performance-game-patterns.md`](references/performance-game-patterns.md) |
-| Memoria | [`references/game-performance-booster/coverage-log.md`](references/game-performance-booster/coverage-log.md) — inventario versionado en git |
-| Regla Cursor | [`.cursor/rules/game-performance-booster.mdc`](.cursor/rules/game-performance-booster.mdc) |
-
-**Qué hace:** mide baseline (CPU 4×, ~390px), audita checklist de rendimiento, optimiza HUD y canvas con diffs mínimos, verifica ≥55 FPS y regresión de juego, documenta `references/{slug}/performance-baseline.md`, actualiza `coverage-log.md`.
-
-**Qué no hace:** no optimiza todos los jugables de golpe; no añade overlay FPS en producción; no reescribe engines ni quita skins; no modifica landing/biblioteca/salón/about; no marca specs como `Aprobado`; no añade tests E2E de FPS.
-
-**Estados por columna en el inventario:** `pendiente` · `en_progreso` · `completo` · `parcial` · `n/a`
+Slugs de jugables actuales para post-integración: `asteroids`, `tetris`, `arkanoid`, `snake`, `frogger`.
 
 ## Skills
 
-Skills del proyecto en `.claude/skills/` (espejo en `.agents/skills/`). Invocar con `/` en Claude Code o `@` en Cursor.
+Además de la tabla anterior, skill de UI sin subagente dedicado:
 
-| Skill / regla | Uso |
-|---------------|-----|
-| `/frontend-design` | Diseñar la interfaz de usuario (estética retro CRT, tokens en `app/arcade-vault.css`). |
-| `@game-planner` | Evaluar qué juego retro encaja en la plataforma; mantener memoria en `references/game-planner/suggestions-log.md`. **No escribe specs** — handoff a `@add-game`. |
-| `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/`. **No implementa código** — promover variante elegida a `specs/NN-{slug}.md` antes de `@spec-impl-game`. |
-| `@skin-designer` | Aplicar skins classic/retro/neon a **un juego a la vez**; memoria en `references/skin-designer/game-with-themes.md`. |
-| `@mobile-porter` | Auditar y corregir touch play móvil en **un juego a la vez**; memoria en `references/mobile-porter/coverage-log.md`. |
-| `@game-performance-booster` | Auditar y optimizar rendimiento canvas/HUD en **un juego a la vez**; memoria en `references/game-performance-booster/coverage-log.md`. |
-| `@spec` | Diseñar un spec genérico antes de escribir código. |
-| `@add-game` | Generar spec unificado por juego (integración + leaderboard). **Extiende `@spec`** — lee primero `/spec`, luego aplica patrones de SPEC 05 y SPEC 06. **No implementa código** — solo produce `specs/NN-slug.md` en `Borrador`. |
-| `@spec-impl` | Implementar un spec en estado `Aprobado` (features genéricas, no juegos). |
-| `@spec-impl-game` | Implementar un spec de **juego** aprobado: mismas fases que `@spec-impl`, luego `@skin-designer`, `@mobile-porter` y `@game-performance-booster` en serie. |
+| Skill | Uso | Definición |
+|-------|-----|------------|
+| `/frontend-design` | Interfaz retro CRT; tokens en `app/arcade-vault.css`. | [`.claude/skills/frontend-design/SKILL.md`](.claude/skills/frontend-design/SKILL.md) |
 
 Usa siempre `/frontend-design` para diseñar la interfaz de usuario.
 
@@ -217,7 +123,7 @@ app/
   about/                  # About + contacto
   auth/                   # Auth mock
   games/                  # Biblioteca, detalle dinámico y rutas estáticas por juego
-  play/                     # Reproductor dinámico y rutas estáticas por juego
+  play/                   # Reproductor dinámico y rutas estáticas por juego
   hall-of-fame/           # Leaderboard
   actions/                # Server Actions (leaderboard, save-score)
   api/                    # contact (Resend), health/supabase
@@ -230,6 +136,7 @@ components/
   providers/auth-provider.tsx
 lib/
   games/{slug}/           # Engines de juegos
+  games/touch-controls/   # Barra táctil compartida (SPEC 10)
   supabase/               # client, server, queries, types
   data/                   # leaderboard híbrido, supabase-games
   navigation.ts, player-name.ts, contact.ts, use-mounted.ts
@@ -245,6 +152,7 @@ references/
   mobile-porter/          # Inventario de cobertura táctil (@mobile-porter)
   game-performance-booster/  # Inventario de rendimiento por juego (@game-performance-booster)
   performance-game-patterns.md  # Patrones HUD/canvas/touch (SPEC 11)
+  frogger/                # Baseline de rendimiento (@game-performance-booster)
   started-games/          # Prototipos vanilla para portar
   templates/              # Referencias JSX/CSS de diseño
   source-assets/          # Assets fuente
@@ -257,7 +165,7 @@ Alias de importación: `@/*` apunta a la raíz del proyecto.
 ## Supabase y datos
 
 - **Tablas:** `games` (catálogo persistido), `scores` (historial de partidas).
-- **Juegos en Supabase:** `asteroids`, `tetris`, `arkanoid`, `snake` (`SUPABASE_GAMES`).
+- **Juegos en Supabase:** `asteroids`, `tetris`, `arkanoid`, `snake`, `frogger` (`SUPABASE_GAMES`).
 - **Híbrido:** juegos en Supabase leen/escriben scores reales; el resto usa `seededScores()` mock.
 - **Auth real:** no implementada; `user_id` en scores es `null`. Auth mock solo afecta UI.
 - **Migraciones:** `supabase/migrations/` — aplicar con Supabase CLI o MCP.
@@ -322,6 +230,8 @@ Este proyecto usa **Spec Driven Design** con las skills de [fernando-skills](htt
 | 10 | Controles táctiles móvil | Implementado |
 | 11 | Rendimiento Frogger (patrón por juego) | Implementado |
 
+Juego **Frogger** implementado sin spec numerado en la raíz; diseño en [`specs/game-jam/frogger/`](specs/game-jam/frogger/).
+
 ### Ciclo de trabajo
 
 **Features genéricas:**
@@ -369,17 +279,8 @@ Ver `specs/README.md` para la plantilla y convenciones de formato.
 
 ## Reglas de Cursor
 
-Invocar con `@` en el chat:
+Las reglas en [`.cursor/rules/`](.cursor/rules/) corresponden a la tabla **Agentes y flujos spec** (mismo `@` en el chat). Además:
 
-| Regla | Uso |
-|-------|-----|
-| `@game-planner` | Evaluar qué juego retro encaja; memoria en `references/game-planner/suggestions-log.md` |
-| `@game-jam` | Generar specs temáticos con variantes en `specs/game-jam/{slug}/` |
-| `@skin-designer` | Skins classic/retro/neon por juego; inventario en `references/skin-designer/game-with-themes.md` |
-| `@mobile-porter` | Touch play móvil por juego; inventario en `references/mobile-porter/coverage-log.md` |
-| `@game-performance-booster` | Rendimiento FPS/HUD/canvas por juego; inventario en `references/game-performance-booster/coverage-log.md` |
-| `@spec` | Diseñar un spec antes de escribir código |
-| `@add-game` | Generar spec unificado por juego (integración + leaderboard) |
-| `@spec-impl` | Implementar un spec aprobado (features genéricas) |
-| `@spec-impl-game` | Spec de juego aprobado: `/spec-impl` + `@skin-designer` + `@mobile-porter` + `@game-performance-booster` en serie |
-| `@nextjs` | Convenciones y breaking changes de Next.js 16 (archivos en `app/`) |
+| Regla | Uso | Definición |
+|-------|-----|------------|
+| `@nextjs` | Convenciones y breaking changes de Next.js 16 en `app/`. | [`.cursor/rules/nextjs.mdc`](.cursor/rules/nextjs.mdc) |
