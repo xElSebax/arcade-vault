@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { Game } from "@/app/data";
 import { Btn } from "@/components/btn";
 import { GameSkinSelector } from "@/components/game-skin-selector";
@@ -65,10 +65,17 @@ export function GamePlayerShell({
   arena,
 }: GamePlayerShellProps) {
   const router = useRouter();
+  const initialsInputRef = useRef<HTMLInputElement>(null);
   const overlayOpen = paused || over;
   const showGameControls = touchMode && !overlayOpen && touchControls;
 
   useTouchPlayChrome(touchMode, overlayOpen);
+
+  useEffect(() => {
+    if (over && !saved) {
+      initialsInputRef.current?.focus();
+    }
+  }, [over, saved]);
 
   return (
     <div
@@ -184,6 +191,7 @@ export function GamePlayerShell({
                 {!saved ? (
                   <div className="input-row">
                     <input
+                      ref={initialsInputRef}
                       value={playerName}
                       onChange={(e) =>
                         onInitialsChange(

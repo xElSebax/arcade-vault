@@ -27,6 +27,7 @@ import {
   type Fruit,
   type Vec2,
 } from "./utils";
+import { shouldYieldKeyboardToDom } from "@/lib/games/keyboard-yield";
 
 const GAME_KEYS = new Set([
   "ArrowUp",
@@ -282,15 +283,16 @@ export function createSnakeEngine(): SnakeEngine {
   }
 
   function onKeyDown(e: KeyboardEvent): void {
-    if (GAME_KEYS.has(e.key)) {
-      e.preventDefault();
-    }
+    if (shouldYieldKeyboardToDom(e)) return;
     if (e.code === "KeyP") return;
     if (paused || phase === "gameover") return;
 
     const requested = directionFromKey(e.key);
     if (!requested) return;
 
+    if (GAME_KEYS.has(e.key)) {
+      e.preventDefault();
+    }
     queueDirection(requested);
   }
 
