@@ -1,6 +1,10 @@
 import type { CategoryFilter } from "./categories";
 import { GAMES } from "./games";
 import type { Game } from "./games";
+import { hasStaticGameRoute } from "./static-game-routes";
+
+/** Juegos con engine real y rutas estáticas en /games y /play. */
+export const PLAYABLE_GAMES: Game[] = GAMES.filter((g) => hasStaticGameRoute(g.id));
 
 export {
   ABOUT_HIGHLIGHTS,
