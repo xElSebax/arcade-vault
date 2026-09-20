@@ -1,13 +1,13 @@
 "use client";
 import { useMemo, useState } from "react";
-import { CATEGORIES, GAMES, type CategoryFilter } from "@/app/data";
+import { CATEGORIES, PLAYABLE_GAMES, type CategoryFilter } from "@/app/data";
 import { GameCard } from "@/components/game-card";
 export default function GamesPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("TODOS");
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    return GAMES.filter(
+    return PLAYABLE_GAMES.filter(
       (game) =>
         (category === "TODOS" || game.cat === category) &&
         game.title.toLowerCase().includes(q),

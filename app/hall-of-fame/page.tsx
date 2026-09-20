@@ -7,7 +7,7 @@ import {
   fetchPlayerBestForGame,
   fetchPlayerBestForGameByUserId,
 } from "@/app/actions/leaderboard";
-import { GAMES, seededScores, type ScoreRow } from "@/app/data";
+import { PLAYABLE_GAMES, seededScores, type ScoreRow } from "@/app/data";
 import { useAuth } from "@/components/providers/auth-provider";
 import { isSupabaseGame } from "@/lib/data/supabase-games";
 import { normalizePlayerName, usePlayerName } from "@/lib/player-name";
@@ -15,7 +15,7 @@ import { normalizePlayerName, usePlayerName } from "@/lib/player-name";
 export default function HallOfFamePage() {
   const { user, isLoading: authLoading } = useAuth();
   const storedName = usePlayerName();
-  const [tab, setTab] = useState(GAMES[0].id);
+  const [tab, setTab] = useState(PLAYABLE_GAMES[0].id);
   const [supabaseRows, setSupabaseRows] = useState<ScoreRow[]>([]);
   const [playerBest, setPlayerBest] = useState<{
     score: number;
@@ -26,7 +26,7 @@ export default function HallOfFamePage() {
   const usesSupabase = isSupabaseGame(tab);
   const mockRows = useMemo(() => seededScores(tab.length * 23 + 7, 12), [tab]);
   const rows = usesSupabase ? supabaseRows : mockRows;
-  const game = GAMES.find((g) => g.id === tab);
+  const game = PLAYABLE_GAMES.find((g) => g.id === tab);
 
   const displayName =
     storedName ?? (user?.displayName ? normalizePlayerName(user.displayName) : null);
@@ -127,7 +127,7 @@ export default function HallOfFamePage() {
       </div>
 
       <div className="hall-tabs">
-        {GAMES.map((g) => (
+        {PLAYABLE_GAMES.map((g) => (
           <button
             key={g.id}
             type="button"
